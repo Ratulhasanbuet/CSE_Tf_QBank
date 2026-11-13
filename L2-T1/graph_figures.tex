@@ -1,0 +1,11 @@
+% ===== graph_figures.tex : shared look for all graph / flow diagrams =====
+\usetikzlibrary{arrows.meta,calc,positioning,shapes.geometric}
+\tikzset{
+  gnode/.style={circle, draw=cA!85!black, fill=cA!10, line width=0.9pt, inner sep=1pt, font=\bfseries, text=black},
+  glabel/.style={rectangle, rounded corners=2pt, draw=none, fill=white, fill opacity=0.92, text opacity=1,
+                 inner sep=1.3pt, minimum size=0pt, font=\footnotesize, text=black!85},
+  gedge/.style={->, line width=0.9pt, color=black!70, line cap=round},
+  gsrc/.style={fill=green!22, draw=green!45!black},
+  gsnk/.style={fill=red!14, draw=red!60!black},
+}
+\def\gnodeloaded{}

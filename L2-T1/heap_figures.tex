@@ -1,0 +1,734 @@
+% ===== heap_figures.tex : binomial & Fibonacci heap figures (generated) =====
+\usetikzlibrary{arrows.meta,calc}
+\providecommand{\hpfit}[1]{\sbox0{#1}\ifdim\wd0>\linewidth\resizebox{\linewidth}{!}{#1}\else\usebox0\fi}
+\tikzset{
+  hn/.style={circle, draw=cB!85!black, fill=cB!8, line width=0.9pt, minimum size=0.68cm, inner sep=0pt, font=\small\bfseries, text=black},
+  hmin/.style={fill=orange!28, draw=orange!80!black},
+  hmark/.style={double=white, double distance=1.1pt, fill=black!14, line width=0.8pt},
+  hsel/.style={draw=red!70!black, fill=red!9, line width=1.2pt},
+  he/.style={line width=0.9pt, color=black!70},
+  hnew/.style={line width=1.4pt, color=orange!85!black},
+  hlink/.style={dashed, line width=0.9pt, color=cB!70},
+  hlinka/.style={dashed, ->, line width=0.9pt, color=cB!70},
+  hguide/.style={dashed, thin, color=black!35},
+  hdeg/.style={font=\scriptsize\bfseries, text=cB!70!black},
+  htitle/.style={font=\bfseries\small, text=cB!80!black},
+  hptr/.style={-{Stealth[length=2mm]}, line width=1.2pt, color=orange!80!black},
+  hptrt/.style={font=\small\bfseries, text=orange!70!black},
+  htri/.style={draw=cB!70!black, fill=cB!8, line width=0.8pt, rounded corners=1pt},
+}
+\newcommand{\FigHpDepth}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (pth1) at (3.00,0.00) {0};
+  \node[hn] (pth2) at (1.00,-1.10) {1};
+  \node[hn] (pth3) at (0.00,-2.20) {2};
+  \node[hn] (pth4) at (0.00,-3.30) {3};
+  \node[hn] (pth5) at (1.00,-2.20) {2};
+  \node[hn] (pth6) at (2.00,-1.10) {1};
+  \node[hn] (pth7) at (2.00,-2.20) {2};
+  \node[hn] (pth8) at (3.00,-1.10) {1};
+  \draw[he] (pth1) -- (pth2);
+  \draw[he] (pth2) -- (pth3);
+  \draw[he] (pth3) -- (pth4);
+  \draw[he] (pth2) -- (pth5);
+  \draw[he] (pth1) -- (pth6);
+  \draw[he] (pth6) -- (pth7);
+  \draw[he] (pth1) -- (pth8);
+  \draw[hguide] (-0.8,0.00) -- (3.5,0.00) node[right,font=\small,text=black!80] {Depth 0: $\binom{3}{0} = 1$};
+  \draw[hguide] (-0.8,-1.10) -- (3.5,-1.10) node[right,font=\small,text=black!80] {Depth 1: $\binom{3}{1} = 3$};
+  \draw[hguide] (-0.8,-2.20) -- (3.5,-2.20) node[right,font=\small,text=black!80] {Depth 2: $\binom{3}{2} = 3$};
+  \draw[hguide] (-0.8,-3.30) -- (3.5,-3.30) node[right,font=\small,text=black!80] {Depth 3: $\binom{3}{3} = 1$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpLink}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[htitle] at (3.1,0.9) {two trees $B_{k-1}$};
+  \node[hn] (x1) at (1.6,0) {$x$};  \draw[htri] (1.6,-0.35) -- (0.45,-2.2) -- (2.75,-2.2) -- cycle; \node[font=\small] at (1.6,-1.55) {$B_{k-1}$};
+  \node[hn] (y1) at (4.6,0) {$y$};  \draw[htri] (4.6,-0.35) -- (3.45,-2.2) -- (5.75,-2.2) -- cycle; \node[font=\small] at (4.6,-1.55) {$B_{k-1}$};
+  \draw[hlink] (x1) -- (y1);
+  \draw[->,line width=1.4pt,color=cB!80!black] (6.3,-1.0) -- (7.7,-1.0) node[midway,above,font=\footnotesize\bfseries] {link};
+  \node[htitle] at (11.2,0.9) {one tree $B_k$};
+  \node[hn] (x2) at (12.0,0) {$x$};
+  \draw[htri] (12.0,-0.35) -- (10.85,-2.2) -- (13.15,-2.2) -- cycle; \node[font=\small] at (12.0,-1.55) {$B_{k-1}$};
+  \node[hn,hmin] (y2) at (9.2,-1.1) {$y$};
+  \draw[htri] (9.2,-1.45) -- (8.05,-3.3) -- (10.35,-3.3) -- cycle; \node[font=\small] at (9.2,-2.65) {$B_{k-1}$};
+  \draw[hnew] (x2) -- (y2);
+  \node[font=\scriptsize\itshape,text=orange!70!black] at (12.0,-2.65) {$y$ becomes the leftmost child of $x$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpUnionIn}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (nIn1) at (0.00,0.00) {10};
+  \node[hn] (nIn2) at (0.00,-1.10) {20};
+  \node[hn] (nIn3) at (2.55,0.00) {5};
+  \node[hn] (nIn4) at (1.55,-1.10) {8};
+  \node[hn] (nIn5) at (1.55,-2.20) {12};
+  \node[hn] (nIn6) at (2.55,-1.10) {15};
+  \node[hn] (nIn7) at (5.15,0.00) {7};
+  \node[hn] (nIn8) at (6.70,0.00) {11};
+  \node[hn] (nIn9) at (6.70,-1.10) {22};
+  \node[hn] (nIn10) at (9.25,0.00) {3};
+  \node[hn] (nIn11) at (8.25,-1.10) {6};
+  \node[hn] (nIn12) at (8.25,-2.20) {18};
+  \node[hn] (nIn13) at (9.25,-1.10) {14};
+  \draw[he] (nIn1) -- (nIn2);
+  \draw[he] (nIn3) -- (nIn4);
+  \draw[he] (nIn4) -- (nIn5);
+  \draw[he] (nIn3) -- (nIn6);
+  \draw[he] (nIn8) -- (nIn9);
+  \draw[he] (nIn10) -- (nIn11);
+  \draw[he] (nIn11) -- (nIn12);
+  \draw[he] (nIn10) -- (nIn13);
+  \draw[hlinka] (nIn1.east) -- (nIn3.west);
+  \draw[hlinka] (nIn7.east) -- (nIn8.west);
+  \draw[hlinka] (nIn8.east) -- (nIn10.west);
+  \node[hdeg] at (0.00,0.62) {$B_{1}$};
+  \node[hdeg] at (2.55,0.62) {$B_{2}$};
+  \node[htitle] at (1.27,1.35) {Heap $H_1$ (6 nodes)};
+  \node[hdeg] at (5.15,0.62) {$B_{0}$};
+  \node[hdeg] at (6.70,0.62) {$B_{1}$};
+  \node[hdeg] at (9.25,0.62) {$B_{2}$};
+  \node[htitle] at (7.20,1.35) {Heap $H_2$ (7 nodes)};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpUnionSteps}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (eps1) at (0.00,0.00) {7};
+  \node[hn] (eps2) at (2.55,0.00) {10};
+  \node[hn] (eps3) at (1.55,-1.10) {11};
+  \node[hn] (eps4) at (1.55,-2.20) {22};
+  \node[hn] (eps5) at (2.55,-1.10) {20};
+  \node[hn] (eps6) at (7.10,0.00) {3};
+  \node[hn] (eps7) at (5.10,-1.10) {5};
+  \node[hn] (eps8) at (4.10,-2.20) {8};
+  \node[hn] (eps9) at (4.10,-3.30) {12};
+  \node[hn] (eps10) at (5.10,-2.20) {15};
+  \node[hn] (eps11) at (6.10,-1.10) {6};
+  \node[hn] (eps12) at (6.10,-2.20) {18};
+  \node[hn] (eps13) at (7.10,-1.10) {14};
+  \draw[he] (eps2) -- (eps3);
+  \draw[he] (eps3) -- (eps4);
+  \draw[he] (eps2) -- (eps5);
+  \draw[he] (eps6) -- (eps7);
+  \draw[he] (eps7) -- (eps8);
+  \draw[he] (eps8) -- (eps9);
+  \draw[he] (eps7) -- (eps10);
+  \draw[he] (eps6) -- (eps11);
+  \draw[he] (eps11) -- (eps12);
+  \draw[he] (eps6) -- (eps13);
+  \draw[hlinka] (eps1.east) -- (eps2.west);
+  \draw[hlinka] (eps2.east) -- (eps6.west);
+  \node[hdeg] at (0.00,0.62) {$B_{0}$};
+  \node[hdeg] at (2.55,0.62) {$B_{2}$};
+  \node[hdeg] at (7.10,0.62) {$B_{3}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpPqOne}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (One1) at (0.00,0.00) {18};
+  \node[hn] (One2) at (1.55,0.00) {3};
+  \node[hn] (One3) at (1.55,-1.10) {2};
+  \node[hn] (One4) at (6.10,0.00) {20};
+  \node[hn] (One5) at (4.10,-1.10) {12};
+  \node[hn] (One6) at (3.10,-2.20) {1};
+  \node[hn] (One7) at (3.10,-3.30) {$-3$};
+  \node[hn] (One8) at (4.10,-2.20) {6};
+  \node[hn] (One9) at (5.10,-1.10) {19};
+  \node[hn] (One10) at (5.10,-2.20) {4};
+  \node[hn] (One11) at (6.10,-1.10) {$-5$};
+  \draw[he] (One2) -- (One3);
+  \draw[he] (One4) -- (One5);
+  \draw[he] (One5) -- (One6);
+  \draw[he] (One6) -- (One7);
+  \draw[he] (One5) -- (One8);
+  \draw[he] (One4) -- (One9);
+  \draw[he] (One9) -- (One10);
+  \draw[he] (One4) -- (One11);
+  \draw[hlink] (One1.east) -- (One2.west);
+  \draw[hlink] (One2.east) -- (One4.west);
+  \node[hdeg] at (0.00,0.62) {$B_{0}$};
+  \node[hdeg] at (1.55,0.62) {$B_{1}$};
+  \node[hdeg] at (6.10,0.62) {$B_{3}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpPqTwo}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (Two1) at (0.00,0.00) {7};
+  \node[hn] (Two2) at (4.55,0.00) {25};
+  \node[hn] (Two3) at (2.55,-1.10) {17};
+  \node[hn] (Two4) at (1.55,-2.20) {11};
+  \node[hn] (Two5) at (1.55,-3.30) {8};
+  \node[hn] (Two6) at (2.55,-2.20) {9};
+  \node[hn] (Two7) at (3.55,-1.10) {13};
+  \node[hn] (Two8) at (3.55,-2.20) {10};
+  \node[hn] (Two9) at (4.55,-1.10) {21};
+  \draw[he] (Two2) -- (Two3);
+  \draw[he] (Two3) -- (Two4);
+  \draw[he] (Two4) -- (Two5);
+  \draw[he] (Two3) -- (Two6);
+  \draw[he] (Two2) -- (Two7);
+  \draw[he] (Two7) -- (Two8);
+  \draw[he] (Two2) -- (Two9);
+  \draw[hlink] (Two1.east) -- (Two2.west);
+  \node[hdeg] at (0.00,0.62) {$B_{0}$};
+  \node[hdeg] at (4.55,0.62) {$B_{3}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpPqMeld}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (eld1) at (1.00,0.00) {18};
+  \node[hn] (eld2) at (0.00,-1.10) {3};
+  \node[hn] (eld3) at (0.00,-2.20) {2};
+  \node[hn] (eld4) at (1.00,-1.10) {7};
+  \node[hn] (eld5) at (9.55,0.00) {25};
+  \node[hn] (eld6) at (5.55,-1.10) {19};
+  \node[hn] (eld7) at (3.55,-2.20) {12};
+  \node[hn] (eld8) at (2.55,-3.30) {1};
+  \node[hn] (eld9) at (3.55,-3.30) {6};
+  \node[hn] (eld10) at (4.55,-2.20) {4};
+  \node[hn] (eld11) at (4.55,-3.30) {$-20$};
+  \node[hn] (eld12) at (5.55,-2.20) {$-5$};
+  \node[hn] (eld13) at (7.55,-1.10) {17};
+  \node[hn] (eld14) at (6.55,-2.20) {11};
+  \node[hn] (eld15) at (6.55,-3.30) {8};
+  \node[hn] (eld16) at (7.55,-2.20) {9};
+  \node[hn] (eld17) at (8.55,-1.10) {13};
+  \node[hn] (eld18) at (8.55,-2.20) {10};
+  \node[hn] (eld19) at (9.55,-1.10) {21};
+  \draw[he] (eld1) -- (eld2);
+  \draw[he] (eld2) -- (eld3);
+  \draw[he] (eld1) -- (eld4);
+  \draw[he] (eld5) -- (eld6);
+  \draw[he] (eld6) -- (eld7);
+  \draw[he] (eld7) -- (eld8);
+  \draw[he] (eld7) -- (eld9);
+  \draw[he] (eld6) -- (eld10);
+  \draw[he] (eld10) -- (eld11);
+  \draw[he] (eld6) -- (eld12);
+  \draw[he] (eld5) -- (eld13);
+  \draw[he] (eld13) -- (eld14);
+  \draw[he] (eld14) -- (eld15);
+  \draw[he] (eld13) -- (eld16);
+  \draw[he] (eld5) -- (eld17);
+  \draw[he] (eld17) -- (eld18);
+  \draw[he] (eld5) -- (eld19);
+  \draw[hlink] (eld1.east) -- (eld5.west);
+  \node[hdeg] at (1.00,0.62) {$B_{2}$};
+  \node[hdeg] at (9.55,0.62) {$B_{4}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpPqMax}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (Max1) at (7.00,0.00) {7};
+  \node[hn] (Max2) at (3.00,-1.10) {14};
+  \node[hn] (Max3) at (1.00,-2.20) {22};
+  \node[hn] (Max4) at (0.00,-3.30) {115};
+  \node[hn] (Max5) at (0.00,-4.40) {183};
+  \node[hn] (Max6) at (1.00,-3.30) {77};
+  \node[hn] (Max7) at (2.00,-2.20) {25};
+  \node[hn] (Max8) at (2.00,-3.30) {128};
+  \node[hn] (Max9) at (3.00,-2.20) {17};
+  \node[hn] (Max10) at (5.00,-1.10) {80};
+  \node[hn] (Max11) at (4.00,-2.20) {82};
+  \node[hn] (Max12) at (4.00,-3.30) {188};
+  \node[hn] (Max13) at (5.00,-2.20) {118};
+  \node[hn] (Max14) at (6.00,-1.10) {55};
+  \node[hn] (Max15) at (6.00,-2.20) {82};
+  \node[hn] (Max16) at (7.00,-1.10) {24};
+  \node[hn] (Max17) at (11.55,0.00) {11};
+  \node[hn] (Max18) at (9.55,-1.10) {35};
+  \node[hn] (Max19) at (8.55,-2.20) {176};
+  \node[hn] (Max20) at (8.55,-3.30) {189};
+  \node[hn] (Max21) at (9.55,-2.20) {108};
+  \node[hn] (Max22) at (10.55,-1.10) {21};
+  \node[hn] (Max23) at (10.55,-2.20) {38};
+  \node[hn] (Max24) at (11.55,-1.10) {36};
+  \node[hn] (Max25) at (13.10,0.00) {35};
+  \node[hn] (Max26) at (13.10,-1.10) {72};
+  \draw[he] (Max1) -- (Max2);
+  \draw[he] (Max2) -- (Max3);
+  \draw[he] (Max3) -- (Max4);
+  \draw[he] (Max4) -- (Max5);
+  \draw[he] (Max3) -- (Max6);
+  \draw[he] (Max2) -- (Max7);
+  \draw[he] (Max7) -- (Max8);
+  \draw[he] (Max2) -- (Max9);
+  \draw[he] (Max1) -- (Max10);
+  \draw[he] (Max10) -- (Max11);
+  \draw[he] (Max11) -- (Max12);
+  \draw[he] (Max10) -- (Max13);
+  \draw[he] (Max1) -- (Max14);
+  \draw[he] (Max14) -- (Max15);
+  \draw[he] (Max1) -- (Max16);
+  \draw[he] (Max17) -- (Max18);
+  \draw[he] (Max18) -- (Max19);
+  \draw[he] (Max19) -- (Max20);
+  \draw[he] (Max18) -- (Max21);
+  \draw[he] (Max17) -- (Max22);
+  \draw[he] (Max22) -- (Max23);
+  \draw[he] (Max17) -- (Max24);
+  \draw[he] (Max25) -- (Max26);
+  \draw[hlinka] (Max17.west) -- (Max1.east);
+  \draw[hlinka] (Max25.west) -- (Max17.east);
+  \node[hdeg] at (7.00,0.62) {$B_{4}$};
+  \node[hdeg] at (11.55,0.62) {$B_{3}$};
+  \node[hdeg] at (13.10,0.62) {$B_{1}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpDelA}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (elA1) at (7.00,0.00) {3};
+  \node[hn] (elA2) at (3.00,-1.10) {15};
+  \node[hn,hsel] (elA3) at (1.00,-2.20) {17};
+  \node[font=\bfseries\small,text=red!70!black] at ($(elA3.north)+(0,0.24)$) {X};
+  \node[hn] (elA4) at (0.00,-3.30) {21};
+  \node[hn] (elA5) at (0.00,-4.40) {25};
+  \node[hn] (elA6) at (1.00,-3.30) {18};
+  \node[hn] (elA7) at (2.00,-2.20) {42};
+  \node[hn] (elA8) at (2.00,-3.30) {45};
+  \node[hn] (elA9) at (3.00,-2.20) {23};
+  \node[hn] (elA10) at (5.00,-1.10) {11};
+  \node[hn] (elA11) at (4.00,-2.20) {19};
+  \node[hn] (elA12) at (4.00,-3.30) {20};
+  \node[hn] (elA13) at (5.00,-2.20) {16};
+  \node[hn] (elA14) at (6.00,-1.10) {28};
+  \node[hn] (elA15) at (6.00,-2.20) {30};
+  \node[hn] (elA16) at (7.00,-1.10) {33};
+  \node[hn] (elA17) at (8.55,0.00) {23};
+  \node[hn] (elA18) at (8.55,-1.10) {89};
+  \draw[he] (elA1) -- (elA2);
+  \draw[he] (elA2) -- (elA3);
+  \draw[he] (elA3) -- (elA4);
+  \draw[he] (elA4) -- (elA5);
+  \draw[he] (elA3) -- (elA6);
+  \draw[he] (elA2) -- (elA7);
+  \draw[he] (elA7) -- (elA8);
+  \draw[he] (elA2) -- (elA9);
+  \draw[he] (elA1) -- (elA10);
+  \draw[he] (elA10) -- (elA11);
+  \draw[he] (elA11) -- (elA12);
+  \draw[he] (elA10) -- (elA13);
+  \draw[he] (elA1) -- (elA14);
+  \draw[he] (elA14) -- (elA15);
+  \draw[he] (elA1) -- (elA16);
+  \draw[he] (elA17) -- (elA18);
+  \draw[hlinka] (elA1.east) -- (elA17.west);
+  \node[hdeg] at (7.00,0.62) {$B_{4}$};
+  \node[hdeg] at (8.55,0.62) {$B_{1}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpDelB}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (elB1) at (7.00,0.00) {$-\infty$};
+  \node[hn] (elB2) at (3.00,-1.10) {3};
+  \node[hn] (elB3) at (1.00,-2.20) {15};
+  \node[hn] (elB4) at (0.00,-3.30) {21};
+  \node[hn] (elB5) at (0.00,-4.40) {25};
+  \node[hn] (elB6) at (1.00,-3.30) {18};
+  \node[hn] (elB7) at (2.00,-2.20) {42};
+  \node[hn] (elB8) at (2.00,-3.30) {45};
+  \node[hn] (elB9) at (3.00,-2.20) {23};
+  \node[hn] (elB10) at (5.00,-1.10) {11};
+  \node[hn] (elB11) at (4.00,-2.20) {19};
+  \node[hn] (elB12) at (4.00,-3.30) {20};
+  \node[hn] (elB13) at (5.00,-2.20) {16};
+  \node[hn] (elB14) at (6.00,-1.10) {28};
+  \node[hn] (elB15) at (6.00,-2.20) {30};
+  \node[hn] (elB16) at (7.00,-1.10) {33};
+  \node[hn] (elB17) at (8.55,0.00) {23};
+  \node[hn] (elB18) at (8.55,-1.10) {89};
+  \draw[he] (elB1) -- (elB2);
+  \draw[he] (elB2) -- (elB3);
+  \draw[he] (elB3) -- (elB4);
+  \draw[he] (elB4) -- (elB5);
+  \draw[he] (elB3) -- (elB6);
+  \draw[he] (elB2) -- (elB7);
+  \draw[he] (elB7) -- (elB8);
+  \draw[he] (elB2) -- (elB9);
+  \draw[he] (elB1) -- (elB10);
+  \draw[he] (elB10) -- (elB11);
+  \draw[he] (elB11) -- (elB12);
+  \draw[he] (elB10) -- (elB13);
+  \draw[he] (elB1) -- (elB14);
+  \draw[he] (elB14) -- (elB15);
+  \draw[he] (elB1) -- (elB16);
+  \draw[he] (elB17) -- (elB18);
+  \draw[hlinka] (elB1.east) -- (elB17.west);
+  \node[hdeg] at (7.00,0.62) {$B_{4}$};
+  \node[hdeg] at (8.55,0.62) {$B_{1}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigHpDelC}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (elC1) at (0.00,0.00) {33};
+  \node[hn] (elC2) at (8.55,0.00) {3};
+  \node[hn] (elC3) at (4.55,-1.10) {11};
+  \node[hn] (elC4) at (2.55,-2.20) {23};
+  \node[hn] (elC5) at (1.55,-3.30) {28};
+  \node[hn] (elC6) at (1.55,-4.40) {30};
+  \node[hn] (elC7) at (2.55,-3.30) {89};
+  \node[hn] (elC8) at (3.55,-2.20) {19};
+  \node[hn] (elC9) at (3.55,-3.30) {20};
+  \node[hn] (elC10) at (4.55,-2.20) {16};
+  \node[hn] (elC11) at (6.55,-1.10) {15};
+  \node[hn] (elC12) at (5.55,-2.20) {21};
+  \node[hn] (elC13) at (5.55,-3.30) {25};
+  \node[hn] (elC14) at (6.55,-2.20) {18};
+  \node[hn] (elC15) at (7.55,-1.10) {42};
+  \node[hn] (elC16) at (7.55,-2.20) {45};
+  \node[hn] (elC17) at (8.55,-1.10) {23};
+  \draw[he] (elC2) -- (elC3);
+  \draw[he] (elC3) -- (elC4);
+  \draw[he] (elC4) -- (elC5);
+  \draw[he] (elC5) -- (elC6);
+  \draw[he] (elC4) -- (elC7);
+  \draw[he] (elC3) -- (elC8);
+  \draw[he] (elC8) -- (elC9);
+  \draw[he] (elC3) -- (elC10);
+  \draw[he] (elC2) -- (elC11);
+  \draw[he] (elC11) -- (elC12);
+  \draw[he] (elC12) -- (elC13);
+  \draw[he] (elC11) -- (elC14);
+  \draw[he] (elC2) -- (elC15);
+  \draw[he] (elC15) -- (elC16);
+  \draw[he] (elC2) -- (elC17);
+  \draw[hlinka] (elC1.east) -- (elC2.west);
+  \node[hdeg] at (0.00,0.62) {$B_{0}$};
+  \node[hdeg] at (8.55,0.62) {$B_{4}$};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhExtractA}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (ctA1) at (0.00,0.00) {7};
+  \node[hn] (ctA2) at (0.00,-1.10) {30};
+  \node[hn] (ctA3) at (2.55,0.00) {24};
+  \node[hn] (ctA4) at (1.55,-1.10) {26};
+  \node[hn] (ctA5) at (1.55,-2.20) {35};
+  \node[hn] (ctA6) at (2.55,-1.10) {46};
+  \node[hn] (ctA7) at (4.10,0.00) {23};
+  \node[hn] (ctA8) at (4.10,-1.10) {51};
+  \node[hn] (ctA9) at (5.65,0.00) {17};
+  \node[hn,hmin] (ctA10) at (9.20,0.00) {5};
+  \node[hn] (ctA11) at (7.20,-1.10) {18};
+  \node[hn] (ctA12) at (8.20,-1.10) {52};
+  \node[hn] (ctA13) at (9.20,-1.10) {41};
+  \node[hn] (ctA14) at (9.20,-2.20) {44};
+  \draw[he] (ctA1) -- (ctA2);
+  \draw[he] (ctA3) -- (ctA4);
+  \draw[he] (ctA4) -- (ctA5);
+  \draw[he] (ctA3) -- (ctA6);
+  \draw[he] (ctA7) -- (ctA8);
+  \draw[he] (ctA10) -- (ctA11);
+  \draw[he] (ctA10) -- (ctA12);
+  \draw[he] (ctA10) -- (ctA13);
+  \draw[he] (ctA13) -- (ctA14);
+  \draw[hlink] (ctA1.east) -- (ctA3.west);
+  \draw[hlink] (ctA3.east) -- (ctA7.west);
+  \draw[hlink] (ctA7.east) -- (ctA9.west);
+  \draw[hlink] (ctA9.east) -- (ctA10.west);
+  \draw[hptr] (9.20,0.95) -- (ctA10.north);
+  \node[hptrt] at (9.20,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhExtractB}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (ctB1) at (0.00,0.00) {7};
+  \node[hn] (ctB2) at (0.00,-1.10) {30};
+  \node[hn] (ctB3) at (2.55,0.00) {24};
+  \node[hn] (ctB4) at (1.55,-1.10) {26};
+  \node[hn] (ctB5) at (1.55,-2.20) {35};
+  \node[hn] (ctB6) at (2.55,-1.10) {46};
+  \node[hn] (ctB7) at (4.10,0.00) {23};
+  \node[hn] (ctB8) at (4.10,-1.10) {51};
+  \node[hn] (ctB9) at (5.65,0.00) {17};
+  \node[hn] (ctB10) at (7.20,0.00) {18};
+  \node[hn] (ctB11) at (8.75,0.00) {52};
+  \node[hn] (ctB12) at (10.30,0.00) {41};
+  \node[hn] (ctB13) at (10.30,-1.10) {44};
+  \draw[he] (ctB1) -- (ctB2);
+  \draw[he] (ctB3) -- (ctB4);
+  \draw[he] (ctB4) -- (ctB5);
+  \draw[he] (ctB3) -- (ctB6);
+  \draw[he] (ctB7) -- (ctB8);
+  \draw[he] (ctB12) -- (ctB13);
+  \draw[hlink] (ctB1.east) -- (ctB3.west);
+  \draw[hlink] (ctB3.east) -- (ctB7.west);
+  \draw[hlink] (ctB7.east) -- (ctB9.west);
+  \draw[hlink] (ctB9.east) -- (ctB10.west);
+  \draw[hlink] (ctB10.east) -- (ctB11.west);
+  \draw[hlink] (ctB11.east) -- (ctB12.west);
+\end{tikzpicture}}}
+
+\newcommand{\FigFhExtractC}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn,hmin] (ctC1) at (3.00,0.00) {7};
+  \node[hn] (ctC2) at (0.00,-1.10) {30};
+  \node[hn] (ctC3) at (1.00,-1.10) {23};
+  \node[hn] (ctC4) at (1.00,-2.20) {51};
+  \node[hn] (ctC5) at (3.00,-1.10) {24};
+  \node[hn] (ctC6) at (2.00,-2.20) {26};
+  \node[hn] (ctC7) at (2.00,-3.30) {35};
+  \node[hn] (ctC8) at (3.00,-2.20) {46};
+  \node[hn] (ctC9) at (5.55,0.00) {17};
+  \node[hn] (ctC10) at (4.55,-1.10) {18};
+  \node[hn] (ctC11) at (5.55,-1.10) {41};
+  \node[hn] (ctC12) at (5.55,-2.20) {44};
+  \node[hn] (ctC13) at (7.10,0.00) {52};
+  \draw[he] (ctC1) -- (ctC2);
+  \draw[he] (ctC1) -- (ctC3);
+  \draw[he] (ctC3) -- (ctC4);
+  \draw[he] (ctC1) -- (ctC5);
+  \draw[he] (ctC5) -- (ctC6);
+  \draw[he] (ctC6) -- (ctC7);
+  \draw[he] (ctC5) -- (ctC8);
+  \draw[he] (ctC9) -- (ctC10);
+  \draw[he] (ctC9) -- (ctC11);
+  \draw[he] (ctC11) -- (ctC12);
+  \draw[hlink] (ctC1.east) -- (ctC9.west);
+  \draw[hlink] (ctC9.east) -- (ctC13.west);
+  \draw[hptr] (3.00,0.95) -- (ctC1.north);
+  \node[hptrt] at (3.00,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhExIn}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (xIn1) at (0.00,0.00) {6};
+  \node[hn] (xIn2) at (1.55,0.00) {2};
+  \node[hn] (xIn3) at (1.55,-1.10) {5};
+  \node[hn,hmin] (xIn4) at (5.10,0.00) {1};
+  \node[hn] (xIn5) at (3.10,-1.10) {3};
+  \node[hn,hmark] (xIn6) at (4.10,-1.10) {4};
+  \node[hn,hmark] (xIn7) at (5.10,-1.10) {7};
+  \node[hn] (xIn8) at (5.10,-2.20) {8};
+  \node[hn] (xIn9) at (5.10,-3.30) {9};
+  \draw[he] (xIn2) -- (xIn3);
+  \draw[he] (xIn4) -- (xIn5);
+  \draw[he] (xIn4) -- (xIn6);
+  \draw[he] (xIn4) -- (xIn7);
+  \draw[he] (xIn7) -- (xIn8);
+  \draw[he] (xIn8) -- (xIn9);
+  \draw[hlink] (xIn1.east) -- (xIn2.west);
+  \draw[hlink] (xIn2.east) -- (xIn4.west);
+  \draw[hptr] (5.10,0.95) -- (xIn4.north);
+  \node[hptrt] at (5.10,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhExRoots}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (ots1) at (0.00,0.00) {6};
+  \node[hn] (ots2) at (1.55,0.00) {2};
+  \node[hn] (ots3) at (1.55,-1.10) {5};
+  \node[hn] (ots4) at (3.10,0.00) {3};
+  \node[hn] (ots5) at (4.65,0.00) {4};
+  \node[hn] (ots6) at (6.20,0.00) {7};
+  \node[hn] (ots7) at (6.20,-1.10) {8};
+  \node[hn] (ots8) at (6.20,-2.20) {9};
+  \draw[he] (ots2) -- (ots3);
+  \draw[he] (ots6) -- (ots7);
+  \draw[he] (ots7) -- (ots8);
+  \draw[hlink] (ots1.east) -- (ots2.west);
+  \draw[hlink] (ots2.east) -- (ots4.west);
+  \draw[hlink] (ots4.east) -- (ots5.west);
+  \draw[hlink] (ots5.east) -- (ots6.west);
+\end{tikzpicture}}}
+
+\newcommand{\FigFhExAfter}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (ter1) at (0.00,0.00) {4};
+  \node[hn] (ter2) at (1.55,0.00) {7};
+  \node[hn] (ter3) at (1.55,-1.10) {8};
+  \node[hn] (ter4) at (1.55,-2.20) {9};
+  \node[hn,hmin] (ter5) at (4.10,0.00) {2};
+  \node[hn] (ter6) at (3.10,-1.10) {5};
+  \node[hn] (ter7) at (4.10,-1.10) {3};
+  \node[hn] (ter8) at (4.10,-2.20) {6};
+  \draw[he] (ter2) -- (ter3);
+  \draw[he] (ter3) -- (ter4);
+  \draw[he] (ter5) -- (ter6);
+  \draw[he] (ter5) -- (ter7);
+  \draw[he] (ter7) -- (ter8);
+  \draw[hlink] (ter1.east) -- (ter2.west);
+  \draw[hlink] (ter2.east) -- (ter5.west);
+  \draw[hptr] (4.10,0.95) -- (ter5.north);
+  \node[hptrt] at (4.10,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhRahsut}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[htitle,anchor=east] at (3.2,1.1) {(a) Before \texttt{RAHSUT-DELETE}};
+  \node[hn] (y) at (0,0) {$y$};
+  \node[hn,hsel] (x) at (0,-1.4) {$x$};
+  \node[hn] (c1) at (-1.1,-2.8) {$c_1$};
+  \node[font=\large] at (0,-2.8) {$\cdots$};
+  \node[hn] (ck) at (1.1,-2.8) {$c_k$};
+  \draw[he] (y) -- (x) node[midway,right,font=\footnotesize\bfseries,text=red!70!black] {CUT};
+  \draw[he] (x) -- (c1); \draw[he] (x) -- (ck);
+  \draw[->,line width=1.5pt,color=cB!80!black] (3.0,-1.4) -- (4.6,-1.4) node[midway,above,font=\footnotesize\bfseries] {transform};
+  \begin{scope}[xshift=8.6cm]
+    \node[htitle] at (0.3,1.1) {(b) After \texttt{RAHSUT-DELETE}};
+    \draw[hguide] (-2.8,0.55) -- (3.6,0.55) node[right,font=\footnotesize] {root list};
+    \node[hn] (c1b) at (-2.0,0) {$c_1$};
+    \node[font=\large] at (-1.0,0) {$\cdots$};
+    \node[hn] (ckb) at (0,0) {$c_k$};
+    \node[hn] (yb) at (1.4,0) {$y$};
+    \node[hn,dashed,opacity=0.5,text=red!70!black,draw=red!60!black,fill=red!6] (xb) at (2.8,0) {$x$};
+    \node[font=\scriptsize\itshape,text=red!70!black] at (2.8,-0.7) {deleted};
+  \end{scope}
+\end{tikzpicture}}}
+
+\newcommand{\FigFhMinTree}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[htitle] at (2.0,0.95) {$k=3$ (root)};
+  \node[hn] (x) at (2.0,0) {$x$};
+  \node[hn] (y1) at (0,-1.3) {$y_1$};
+  \node[hn] (y2) at (1.0,-1.3) {$y_2$};
+  \node[hn] (y3) at (2.0,-1.3) {$y_3$};
+  \node[hn] (z1) at (2.0,-2.6) {$z_1$};
+  \draw[he] (x) -- (y1); \draw[he] (x) -- (y2); \draw[he] (x) -- (y3); \draw[he] (y3) -- (z1);
+  \node[hdeg,font=\footnotesize] at (0,-1.9) {$d=0$};
+  \node[hdeg,font=\footnotesize] at (1.0,-1.9) {$d=0$};
+  \node[hdeg,font=\footnotesize,anchor=west] at (2.45,-1.3) {$d=1$};
+  \node[hdeg,font=\footnotesize] at (2.0,-3.2) {$d=0$};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhDecA}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn,hmin] (ecA1) at (2.00,0.00) {17};
+  \node[hn,hmark] (ecA2) at (0.00,-1.10) {163};
+  \node[hn,hmark] (ecA3) at (0.00,-2.20) {382};
+  \node[hn] (ecA4) at (1.00,-1.10) {350};
+  \node[hn] (ecA5) at (1.00,-2.20) {575};
+  \node[hn] (ecA6) at (2.00,-1.10) {479};
+  \node[hn] (ecA7) at (3.55,0.00) {129};
+  \node[hn] (ecA8) at (3.55,-1.10) {849};
+  \node[hn] (ecA9) at (5.10,0.00) {90};
+  \node[hn] (ecA10) at (6.65,0.00) {110};
+  \draw[he] (ecA1) -- (ecA2);
+  \draw[he] (ecA2) -- (ecA3);
+  \draw[he] (ecA1) -- (ecA4);
+  \draw[he] (ecA4) -- (ecA5);
+  \draw[he] (ecA1) -- (ecA6);
+  \draw[he] (ecA7) -- (ecA8);
+  \draw[hlink] (ecA1.east) -- (ecA7.west);
+  \draw[hlink] (ecA7.east) -- (ecA9.west);
+  \draw[hlink] (ecA9.east) -- (ecA10.west);
+  \draw[hptr] (2.00,0.95) -- (ecA1.north);
+  \node[hptrt] at (2.00,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhDecB}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn,hmin] (ecB1) at (3.00,0.00) {90};
+  \node[hn] (ecB2) at (1.00,-1.10) {163};
+  \node[hn] (ecB3) at (0.00,-2.20) {350};
+  \node[hn] (ecB4) at (0.00,-3.30) {575};
+  \node[hn,hmark] (ecB5) at (1.00,-2.20) {382};
+  \node[hn] (ecB6) at (2.00,-1.10) {129};
+  \node[hn] (ecB7) at (2.00,-2.20) {849};
+  \node[hn] (ecB8) at (3.00,-1.10) {110};
+  \node[hn] (ecB9) at (4.55,0.00) {479};
+  \draw[he] (ecB1) -- (ecB2);
+  \draw[he] (ecB2) -- (ecB3);
+  \draw[he] (ecB3) -- (ecB4);
+  \draw[he] (ecB2) -- (ecB5);
+  \draw[he] (ecB1) -- (ecB6);
+  \draw[he] (ecB6) -- (ecB7);
+  \draw[he] (ecB1) -- (ecB8);
+  \draw[hlink] (ecB1.east) -- (ecB9.west);
+  \draw[hptr] (3.00,0.95) -- (ecB1.north);
+  \node[hptrt] at (3.00,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhDelA}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (elA1) at (0.00,0.00) {7};
+  \node[hn] (elA2) at (0.00,-1.10) {30};
+  \node[hn] (elA3) at (2.55,0.00) {24};
+  \node[hn] (elA4) at (1.55,-1.10) {26};
+  \node[hn] (elA5) at (1.55,-2.20) {35};
+  \node[hn] (elA6) at (2.55,-1.10) {46};
+  \node[hn] (elA7) at (4.10,0.00) {23};
+  \node[hn] (elA8) at (5.65,0.00) {17};
+  \node[hn,hmin] (elA9) at (9.20,0.00) {3};
+  \node[hn] (elA10) at (7.20,-1.10) {18};
+  \node[hn] (elA11) at (7.20,-2.20) {39};
+  \node[hn] (elA12) at (8.20,-1.10) {52};
+  \node[hn] (elA13) at (9.20,-1.10) {41};
+  \node[hn] (elA14) at (9.20,-2.20) {44};
+  \draw[he] (elA1) -- (elA2);
+  \draw[he] (elA3) -- (elA4);
+  \draw[he] (elA4) -- (elA5);
+  \draw[he] (elA3) -- (elA6);
+  \draw[he] (elA9) -- (elA10);
+  \draw[he] (elA10) -- (elA11);
+  \draw[he] (elA9) -- (elA12);
+  \draw[he] (elA9) -- (elA13);
+  \draw[he] (elA13) -- (elA14);
+  \draw[hlink] (elA1.east) -- (elA3.west);
+  \draw[hlink] (elA3.east) -- (elA7.west);
+  \draw[hlink] (elA7.east) -- (elA8.west);
+  \draw[hlink] (elA8.east) -- (elA9.west);
+  \draw[hptr] (9.20,0.95) -- (elA9.north);
+  \node[hptrt] at (9.20,1.18) {min};
+\end{tikzpicture}}}
+
+\newcommand{\FigFhDelB}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn] (elB1) at (0.00,0.00) {7};
+  \node[hn] (elB2) at (0.00,-1.10) {30};
+  \node[hn] (elB3) at (2.55,0.00) {24};
+  \node[hn] (elB4) at (1.55,-1.10) {26};
+  \node[hn] (elB5) at (1.55,-2.20) {35};
+  \node[hn] (elB6) at (2.55,-1.10) {46};
+  \node[hn] (elB7) at (4.10,0.00) {23};
+  \node[hn] (elB8) at (5.65,0.00) {17};
+  \node[hn] (elB9) at (7.20,0.00) {18};
+  \node[hn] (elB10) at (7.20,-1.10) {39};
+  \node[hn] (elB11) at (8.75,0.00) {52};
+  \node[hn] (elB12) at (10.30,0.00) {41};
+  \node[hn] (elB13) at (10.30,-1.10) {44};
+  \draw[he] (elB1) -- (elB2);
+  \draw[he] (elB3) -- (elB4);
+  \draw[he] (elB4) -- (elB5);
+  \draw[he] (elB3) -- (elB6);
+  \draw[he] (elB9) -- (elB10);
+  \draw[he] (elB12) -- (elB13);
+  \draw[hlink] (elB1.east) -- (elB3.west);
+  \draw[hlink] (elB3.east) -- (elB7.west);
+  \draw[hlink] (elB7.east) -- (elB8.west);
+  \draw[hlink] (elB8.east) -- (elB9.west);
+  \draw[hlink] (elB9.east) -- (elB11.west);
+  \draw[hlink] (elB11.east) -- (elB12.west);
+\end{tikzpicture}}}
+
+\newcommand{\FigFhDelC}{\hpfit{%
+\begin{tikzpicture}[>=Stealth]
+  \node[hn,hmin] (elC1) at (3.00,0.00) {7};
+  \node[hn] (elC2) at (0.00,-1.10) {30};
+  \node[hn] (elC3) at (1.00,-1.10) {17};
+  \node[hn] (elC4) at (1.00,-2.20) {23};
+  \node[hn] (elC5) at (3.00,-1.10) {24};
+  \node[hn] (elC6) at (2.00,-2.20) {26};
+  \node[hn] (elC7) at (2.00,-3.30) {35};
+  \node[hn] (elC8) at (3.00,-2.20) {46};
+  \node[hn] (elC9) at (5.55,0.00) {18};
+  \node[hn] (elC10) at (4.55,-1.10) {39};
+  \node[hn] (elC11) at (5.55,-1.10) {41};
+  \node[hn] (elC12) at (5.55,-2.20) {44};
+  \node[hn] (elC13) at (7.10,0.00) {52};
+  \draw[he] (elC1) -- (elC2);
+  \draw[he] (elC1) -- (elC3);
+  \draw[he] (elC3) -- (elC4);
+  \draw[he] (elC1) -- (elC5);
+  \draw[he] (elC5) -- (elC6);
+  \draw[he] (elC6) -- (elC7);
+  \draw[he] (elC5) -- (elC8);
+  \draw[he] (elC9) -- (elC10);
+  \draw[he] (elC9) -- (elC11);
+  \draw[he] (elC11) -- (elC12);
+  \draw[hlink] (elC1.east) -- (elC9.west);
+  \draw[hlink] (elC9.east) -- (elC13.west);
+  \draw[hptr] (3.00,0.95) -- (elC1.north);
+  \node[hptrt] at (3.00,1.18) {min};
+\end{tikzpicture}}}
+

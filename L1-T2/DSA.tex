@@ -54,7 +54,7 @@
 \definecolor{cB}{RGB}{1,87,155}
 \definecolor{cC}{RGB}{27,94,32}
 \definecolor{cD}{RGB}{106,27,154}
-\definecolor{cE}{RGB}{230,81,0}
+\definecolor{cE}{RGB}{191,54,12}
 \definecolor{cF}{RGB}{0,96,100}
 \definecolor{cG}{RGB}{136,14,79}
 \definecolor{cH}{RGB}{62,39,35}
@@ -26074,49 +26074,6 @@ $T^{(4)}_{31}$: $3\!\to\!2\!\to\!4\!\to\!1$. $T_{31}: 0\vee(1\wedge 1)=1$.)
 reach each other and vertex 1.
 \end{tcolorbox}
 
-
-
-\item Write the Bellman-Ford algorithm. Analyze the time complexity and correctness of the Bellman-Ford algorithm. \mk{20}
-\yr{CSE 207 | 2012--13}
-%% ---------------------------------------------------------------------
-%% Q: Bellman-Ford algorithm; time complexity; correctness.
-%%    [CSE 207 | 2012--13]
-%% ---------------------------------------------------------------------
-\begin{tcolorbox}[enhanced,breakable,ansbox,colback=cD!4,colframe=cD,
-  boxrule=0.8pt,arc=5pt,
-  title={\textbf{Answer}},fonttitle=\bfseries\color{white},colbacktitle=cD]
-\begin{algorithm}[H]
-\caption{\textsc{Bellman-Ford}$(G, w, s)$}
-\begin{algorithmic}[1]
-\State $d[s]\gets 0$;\ $d[v]\gets\infty$ for all $v\ne s$
-\State $\pi[v]\gets$ NIL for all $v$
-\For{$i\gets 1$ \textbf{to} $|V|-1$}
-  \For{each edge $(u,v)\in E$}
-    \If{$d[u]+w(u,v)<d[v]$}
-      \State $d[v]\gets d[u]+w(u,v)$;\ $\pi[v]\gets u$
-    \EndIf
-  \EndFor
-\EndFor
-\For{each edge $(u,v)\in E$}   \Comment{check for negative cycles}
-  \If{$d[u]+w(u,v)<d[v]$} \Return \textbf{false}
-  \EndIf
-\EndFor
-\State\Return \textbf{true}
-\end{algorithmic}
-\end{algorithm}
-
-\begin{complexity}
-$|V|-1$ passes, each scanning all $|E|$ edges: $\Theta(VE)$.
-\end{complexity}
-
-\textbf{Correctness sketch.}
-\textit{Loop invariant}: after $i$ passes, $d[v]=\delta(s,v)$ for all
-$v$ reachable via a shortest path with $\le i$ edges.
-After $|V|-1$ passes (longest possible simple path), all reachable
-$d[v]=\delta(s,v)$ if no negative cycle.
-If a negative cycle is reachable, some $d[v]$ can still be reduced
-in the final check $\rightarrow$ return FALSE. $\square$
-\end{tcolorbox}
 
 
 \item What is a flow network? What is the maximum-flow problem? Explain how one can convert a multiple-source, multiple-sink maximum-flow problem into a problem with a single source and a single sink. \mk{4+2+4=10}

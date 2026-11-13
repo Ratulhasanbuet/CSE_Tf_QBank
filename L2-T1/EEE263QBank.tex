@@ -68,7 +68,7 @@
 \definecolor{cB}{RGB}{1,87,155}
 \definecolor{cC}{RGB}{27,94,32}
 \definecolor{cD}{RGB}{106,27,154}
-\definecolor{cE}{RGB}{230,81,0}
+\definecolor{cE}{RGB}{191,54,12}
 \definecolor{cF}{RGB}{0,96,100}
 \definecolor{cH}{RGB}{0,77,64}
 \definecolor{cG}{RGB}{136,14,79}
@@ -193,7 +193,200 @@
 \setlist[enumerate,3]{label=(\roman*),leftmargin=2.5em,itemsep=2pt}
 
 
+% ===== 555 internal-block-diagram macros (textbook style) =====
+% Needs: tikz, circuitikz, \usetikzlibrary{calc}
+\providecolor{icblue}{HTML}{CBE9FA}
+\tikzset{every picture/.append style={thick}}
 
+% Internal circuit of the 555 (divider, 2 comparators, SR flip-flop, discharge BJT)
+% Defines coordinates: thr (pin 6), trg (pin 2), dis (pin 7), outp (pin 3 tip)
+\newcommand{\FFcore}{%
+  \draw[thick, fill=icblue] (-1.2,-4.9) rectangle (8.7,6.2);
+  % ---- resistor divider ----
+  \draw (0,6.2) to[short, o-] (0,7.1) node[vcc]{$V_{CC}$};
+  \draw (0,6.2) -- (0,5.6) to[R, l_=$R_1$] (0,4.4) -- (0,2.9);
+  \draw (0,2.9) -- (0,2.4) to[R, l_=$R_1$] (0,1.4) -- (0,0.9);
+  \draw (0,0.9) -- (0,-0.6) to[R, l_=$R_1$] (0,-1.8) -- (0,-4.64);
+  \draw (0,-4.64) to[short, -o] (0,-4.9);
+  \draw (0,-4.9) node[ground]{};
+  \fill (0,2.9) circle (2pt) (0,0.9) circle (2pt) (0,-4.64) circle (2pt);
+  \node[anchor=east, font=\small] at (-0.15,3.12) {$V_{TH}$};
+  \node[anchor=east, font=\small] at (-0.15,1.12) {$V_{TL}$};
+  % ---- comparators ----
+  \node[op amp, noinv input up] (C1) at (3.4,3.39) {};
+  \node[op amp, noinv input up] (C2) at (3.4,0.41) {};
+  \node[font=\small, anchor=south] at (3.4,4.25) {Comparator 1};
+  \node[font=\small, anchor=south] at (3.4,1.27) {Comparator 2};
+  \draw (0,2.9) -- (C1.-);
+  \draw (0,0.9) -- (C2.+);
+  \coordinate (thr) at (-0.8,3.89);
+  \coordinate (trg) at (-0.8,-0.08);
+  \draw (thr) -- (C1.+);      % crosses divider (no dot)
+  \draw (trg) -- (C2.-);
+  % ---- SR flip-flop (built-in circuitikz flipflop) ----
+  \ctikzset{multipoles/flipflop/width=1.43, multipoles/flipflop/pin spacing=0.75}
+  \node[flipflop, external pins width=0, flipflop def={t1=$R$, t3=$S$, t4=$\overline{Q}$, t6=$Q$},
+        font=\small, fill=white] (FF) at (6.7,2.1) {};
+  \node[font=\small, align=center] at (6.7,2.1) {Flip-flop};
+  \draw (C1.out) -- ++(0.45,0) |- (FF.pin 1);
+  \draw (C2.out) -- ++(0.45,0) |- (FF.pin 3);
+  \coordinate (outp) at (9.7,3.15);
+  \draw (FF.pin 6) -- (8.7,3.15) to[short, -o] (outp);
+  \node[anchor=south] at (outp) {$v_O$};
+  % ---- discharge transistor ----
+  \node[npn, xscale=-1] (Q1) at (4.0,-3.45) {};
+  \node[font=\small, anchor=east] at (3.15,-3.45) {$Q_1$};
+  \draw (FF.pin 4) -- (8.2,1.05) -- (8.2,-3.45) to[R, l_=$100\,\Omega$] (Q1.B);
+  \draw (Q1.E) |- (0,-4.64);
+  \coordinate (dis) at (-0.8,-2.68);
+  \draw (dis) -- (Q1.C);
+}
+
+% --- Monostable:   \FFmono{R label}{C label}
+\newcommand{\FFmono}[2]{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round]
+  \FFcore
+  % rail from V_CC to R, R, C column
+  \draw (0,6.8) -- (-4.6,6.8); \fill (0,6.8) circle (2pt);
+  \draw (-4.6,6.8) to[R, l^={#1}] (-4.6,3.89) coordinate (vc);
+  \fill (vc) circle (2pt);
+  \draw (vc) to[C, l^={#2}] (-4.6,1.1) node[ground]{};
+  % v_C : threshold + discharge + terminal
+  \draw (vc) to[short, o-] ++(-1.0,0) node[left]{$v_C$};
+  \draw (vc) -- (thr);
+  \draw (-1.7,3.89) -- (-1.7,-2.68) -- (dis); \fill (-1.7,3.89) circle (2pt);
+  % trigger input
+  \draw (-5.6,-0.08) to[short, o-] (trg); \node[left] at (-5.6,-0.08) {$v_{\mathrm{trigger}}$};
+\end{circuitikz}}
+
+% --- Astable:  \FFastable{RA label}{RB label}{C label}   (standard)
+\newcommand{\FFastable}[3]{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round]
+  \FFcore
+  \draw (0,6.8) -- (-4.6,6.8); \fill (0,6.8) circle (2pt);
+  \draw (-4.6,6.8) to[R, l^={#1}] (-4.6,4.4) coordinate (ja);
+  \draw (ja) to[R, l^={#2}] (-4.6,1.9) coordinate (jb);
+  \draw (jb) to[C, l^={#3}] (-4.6,0.4) node[ground]{};
+  \fill (ja) circle (2pt) (jb) circle (2pt);
+  % pins 6 and 2 tied to R_B - C junction
+  \draw (jb) -- (-1.7,1.9) -- (-1.7,3.89) -- (thr);
+  \draw (-1.7,1.9) -- (-1.7,-0.08) -- (trg); \fill (-1.7,1.9) circle (2pt);
+  % discharge pin tied to R_A - R_B junction
+  \draw (ja) -- (-5.6,4.4) -- (-5.6,-2.68) -- (dis); \fill (-1.7,1.9) circle (2pt);
+\end{circuitikz}}
+
+% --- Astable with bypass diode:  \FFastabled{RA}{RB}{C}{D label}
+\newcommand{\FFastabled}[4]{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round]
+  \FFcore
+  \draw (0,6.8) -- (-4.6,6.8); \fill (0,6.8) circle (2pt);
+  \draw (-4.6,6.8) to[R, l^={#1}] (-4.6,4.4) coordinate (ja);
+  \draw (ja) to[R, l^={#2}] (-4.6,1.9) coordinate (jb);
+  \draw (jb) to[C, l^={#3}] (-4.6,0.4) node[ground]{};
+  \fill (ja) circle (2pt) (jb) circle (2pt);
+  % bypass diode across R_B (anode at R_A side)
+  \draw (ja) -- (-6.0,4.4) to[D, l_={#4}] (-6.0,1.9) -- (jb);
+  \draw (jb) -- (-1.7,1.9) -- (-1.7,3.89) -- (thr);
+  \draw (-1.7,1.9) -- (-1.7,-0.08) -- (trg); \fill (-1.7,1.9) circle (2pt);
+  \draw (-6.0,4.4) -- (-7.6,4.4) -- (-7.6,-2.68) -- (dis); \fill (-6.0,4.4) circle (2pt);
+\end{circuitikz}}
+
+% --- Blank (question figure): only the 555 internals with terminals
+\newcommand{\FFblank}{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round]
+  \FFcore
+  \draw (thr) to[short, o-] ++(-1.2,0) node[left]{Threshold};
+  \draw (trg) to[short, o-] ++(-1.2,0) node[left]{Trigger};
+  \draw (dis) to[short, o-] ++(-1.2,0) node[left]{Discharge};
+\end{circuitikz}}
+
+
+% ===== diode-circuit helper macros =====
+\providecolor{dBlue}{HTML}{1F5FBF}
+\providecolor{dRed}{HTML}{C0392B}
+\providecolor{dGreen}{HTML}{1E8449}
+% staircase input levels, one value per unit interval (t = 0..12)
+\newcommand{\vinlist}{0,1,2,3,2,1,0,-1,-2,-3,-2,-1}
+\newcommand{\stairpath}[1]{(0,0) \foreach \v [count=\k from 0] in #1{ -- (\k,\v) -- (\k+1,\v)} -- (12,0) -- (12.5,0)}
+
+% series diode circuit; #1 = 0 plain, 1 = with v_D, i_D labels
+\newcommand{\diodeckt}[1]{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round, scale=0.95, transform shape]
+  \draw (0,2.6) to[V, l_=$V_{\mathrm{in}}$] (0,0);
+  \draw (0,2.6) to[D, l_=$D$] (3.0,2.6) -- (4.8,2.6)
+        to[R, l=$1\,\Omega$] (4.8,0) -- (0,0);
+  \draw (4.8,2.6) to[short, *-o] (6.0,2.6);
+  \draw (4.8,0) to[short, *-o] (6.0,0);
+  \draw (6.0,2.6) to[open, v_=$V_{\mathrm{out}}$] (6.0,0);
+  \ifnum#1=1
+    \draw[-{Stealth[length=2mm]}] (3.2,3.05) -- node[above, font=\footnotesize]{$i_D$} (4.4,3.05);
+    \node[font=\footnotesize] at (1.5,3.1) {$+\ v_D\ -$};
+  \fi
+
+\end{circuitikz}}
+
+% diode I-V characteristic (given)
+\newcommand{\diodeiv}{%
+\begin{tikzpicture}[line width=0.9pt, font=\small, >=Stealth]
+  \draw[->] (-4.3,0) -- (4.2,0) node[below]{$v_D\ (\mathrm{V})$};
+  \draw[->] (0,-3.0) -- (0,3.2) node[left]{$i_D\ (\mathrm{A})$};
+  \draw[very thick, dBlue] (-3,-2.6) -- (-3,0) -- (1,0) -- (3.7,2.7);
+  \draw (-3,0.1) -- (-3,-0.1) node[below]{$-3$};
+  \draw (1,0.1) -- (1,-0.1) node[below]{$1$};
+  \node[anchor=west, align=left, font=\footnotesize] at (2.5,1.1) {slope $=1\ \mathrm{A/V}$\\[-1pt]$(r_d=1\,\Omega)$};
+  \node[font=\footnotesize, anchor=west] at (-2.9,-1.6) {breakdown};
+\end{tikzpicture}}
+
+% one waveform panel
+% #1 ymin #2 ymax #3 y-scale(cm/V) #4 tick list #5 y-label #6 curve style #7 level list #8 extra drawing (e.g. input overlay)
+\newcommand{\wavepanel}[8]{%
+\begin{scope}[y=#3 cm, x=0.82cm]
+  \foreach \k in {1,...,12}{\draw[gray!50, dotted] (\k,#1) -- (\k,#2);}
+  #8
+  \draw[->] (0,0) -- (13,0) node[right]{$t$};
+  \draw[->] (0,#1) -- (0,#2) node[above]{#5};
+  \foreach \y in {#4}{\draw (-0.1,\y) -- (0.1,\y); \node[left, font=\footnotesize] at (-0.1,\y) {$\y$};}
+  \foreach \k in {1,...,12}{\draw (\k,0.08/#3) -- (\k,-0.08/#3);}
+  \draw[#6] \stairpath{#7};
+\end{scope}}
+
+\newcommand{\voutA}{0,0,0.5,1,0.5,0,0,0,0,0,0,0}
+\newcommand{\voutB}{0,0.3,1.3,2.3,1.3,0.3,0,0,0,0,0,0}
+
+% transfer characteristic of part (a): Vout = (Vin-1)/2 for Vin > 1 V
+\newcommand{\tcharA}{%
+\begin{tikzpicture}[line width=0.9pt, font=\small, x=0.85cm, y=1.1cm, >=Stealth]
+  \draw[->] (-3.8,0) -- (3.9,0) node[right]{$V_{\mathrm{in}}$};
+  \draw[->] (0,-0.3) -- (0,1.5) node[above]{$V_{\mathrm{out}}$};
+  \foreach \x in {-3,-2,-1,1,2,3}{\draw (\x,0.05) -- (\x,-0.05) node[below, font=\footnotesize]{$\x$};}
+  \draw[very thick, dBlue] (-3.5,0) -- (1,0) -- (3.5,1.25);
+  \draw[dashed, gray] (2,0) -- (2,0.5) -- (0,0.5);
+  \draw[dashed, gray] (3,0) -- (3,1) -- (0,1);
+  \fill[dBlue] (2,0.5) circle (1.8pt) (3,1) circle (1.8pt);
+  \node[left, font=\footnotesize] at (0,0.5) {$0.5$};
+  \node[left, font=\footnotesize] at (0,1) {$1.0$};
+  \node[above left, font=\footnotesize, dBlue] at (3.5,1.25) {$V_{\mathrm{out}}=\frac{V_{\mathrm{in}}-1}{2}$};
+  \node[above, font=\footnotesize, dBlue] at (-1.5,0) {$V_{\mathrm{out}}=0$};
+\end{tikzpicture}}
+
+% transfer characteristic of part (b): CVD 0.7 V
+\newcommand{\tcharB}{%
+\begin{tikzpicture}[line width=0.9pt, font=\small, x=0.85cm, y=0.8cm, >=Stealth]
+  \draw[->] (-3.8,0) -- (3.9,0) node[right]{$V_{\mathrm{in}}$};
+  \draw[->] (0,-0.3) -- (0,3.0) node[above]{$V_{\mathrm{out}}$};
+  \foreach \x in {-3,-2,-1,1,2,3}{\draw (\x,0.05) -- (\x,-0.05) node[below, font=\footnotesize]{$\x$};}
+  \draw[very thick, dRed] (-3.5,0) -- (0.7,0) -- (3.5,2.8);
+  \draw[dashed, gray] (1,0) -- (1,0.3) -- (0,0.3);
+  \draw[dashed, gray] (2,0) -- (2,1.3) -- (0,1.3);
+  \draw[dashed, gray] (3,0) -- (3,2.3) -- (0,2.3);
+  \fill[dRed] (1,0.3) circle (1.8pt) (2,1.3) circle (1.8pt) (3,2.3) circle (1.8pt);
+  \node[left, font=\footnotesize] at (0,0.3) {$0.3$};
+  \node[left, font=\footnotesize] at (0,1.3) {$1.3$};
+  \node[left, font=\footnotesize] at (0,2.3) {$2.3$};
+  \node[above left, font=\footnotesize, dRed, inner sep=1pt] at (0.7,0.02) {$0.7$};
+  \node[above left, font=\footnotesize, dRed] at (3.5,2.8) {$V_{\mathrm{out}}=V_{\mathrm{in}}-0.7$};
+  \node[above, font=\footnotesize, dRed] at (-1.8,0) {$V_{\mathrm{out}}=0$};
+\end{tikzpicture}}
 
 
 \begin{document}
@@ -258,12 +451,12 @@
         \item \tocsub{sub:s1-dc}{Diode Circuit Analysis}
         \item \tocsub{sub:s1-models}{Diode Models (Ideal, CVD, Piecewise Linear)}
         \item \tocsub{sub:s1-ssm}{Small Signal Model}
-        \item \tocsub{sub:s1-peak}{Peak Rectifier}
         \item \tocsub{sub:s1-iv}{I-V Characteristics \& Waveform Analysis}
-        \item \tocsub{sub:s1-thermal}{Diode Thermal Characteristics}
-        \item \tocsub{sub:s1-rectifier}{Bridge Rectifier}
         \item \tocsub{sub:s1-zener}{Zener Diode Regulator}
         \item \tocsub{sub:s1-battery}{Battery Charger Circuit}
+        \item \tocsub{sub:s1-peak}{Peak Rectifier}
+        \item \tocsub{sub:s1-rectifier}{Bridge Rectifier}
+        \item \tocsub{sub:s1-thermal}{Diode Thermal Characteristics}
         \item \tocsub{sub:s1-spd}{Special Purpose Diodes/Thyristors}
         \item \tocsub{sub:s1-Miscellaneous}{Miscellaneous}
       \end{itemize}
@@ -314,7 +507,6 @@
         \item \tocsub{sub:s4-bootstrap}{Bootstrapped Follower}
         \item \tocsub{sub:s4-cc}{Common Collector (Emitter Follower)}
         \item \tocsub{sub:s4-biasimpedance}{Biasing and Input Impedance}
-        \item \tocsub{sub:s4-io}{BJT Input-Output Characteristics}
       \end{itemize}
 
   \end{itemize}
@@ -337,7 +529,6 @@
         \item \tocsub{sub:s5-compare}{Comparison with BJT}
         \item \tocsub{sub:s5-threshold}{Threshold Voltage}
         \item \tocsub{sub:s5-dc}{DC Analysis \& Transistor Sizing}
-        \item \tocsub{sub:s5-multistage}{Multi-stage MOSFET Circuit Design}
         \item \tocsub{sub:s5-gm}{MOSFET Transconductance}
         \item \tocsub{sub:s5-vtc}{Voltage Transfer Characteristics}
         \item \tocsub{sub:s5-ssa}{MOSFET as Small-Signal Amplifier}
@@ -915,6 +1106,495 @@
 
 \end{enumerate}
 
+
+%%──────────────────────────────────────────────────────────────────────
+\subtopic{cA}{I-V Characteristics \& Waveform Analysis}
+\label{sub:s1-iv}
+
+\begin{enumerate}
+    
+\item 
+\begin{enumerate}
+    
+\item What would be the output voltage if the diode and the resistor were connected in parallel?
+\mk{10.67}
+
+\item The I-V characteristic of a diode and an input voltage signal $V_{in}$ are given in the figure. Draw the output voltage $V_{out}$ across the resistor.
+\mk{16}
+\item What would be the output voltage $V_{out}$ across the resistor if the diode had a constant 0.7\,V voltage drop?
+\mk{10}
+
+\begin{center}
+    \diodeckt{0}\hspace{0.8cm}\scalebox{0.75}{\diodeiv}\par\medskip
+    \begin{tikzpicture}
+        \wavepanel{-3.6}{3.6}{0.5}{-3,-2,-1,1,2,3}{$V_{\mathrm{in}}$}{very thick, black}{\vinlist}{}
+    \end{tikzpicture}
+\end{center}
+\end{enumerate}
+\yr{EEE 263 | L-2/T-1 | 2013--14}
+
+
+\item
+\begin{enumerate}
+\item An AC voltage source is applied to a series combination of a diode and a resistance. The dotted line in the figure is the input voltage waveform ($V_{ac}$) and the solid line is the output voltage waveform ($V_R$) across the resistance. Copy $V_R$ from the figure to your answer script exactly to scale and draw the voltage waveform across the diode over the same graph. Given that $\frac{dV_{ac}}{dt}=1\,\text{V/sec}$ when $V_{ac}$ is rising and $\frac{dV_{ac}}{dt}=-1\,\text{V/sec}$ when $V_{ac}$ is falling.
+
+\mk{20} \yr{EEE 263 | L-2/T-1 | 2012--13}
+
+
+\item Draw the I-V characteristics curve of the above diode exactly to scale (mention the voltage(s) at which the diode begins conduction).
+\mk{16} \yr{EEE 263 | L-2/T-1 | 2012--13}
+
+\item Draw the voltage waveform across the diode if it had been connected in parallel to the resistance.
+\mk{10} \yr{EEE 263 | L-2/T-1 | 2012--13}
+
+\begin{center}
+\begin{tikzpicture}[thick,scale=0.8]
+    \draw[gray!40, dashed] (-0.5, 3) -- (13, 3);
+    \draw[gray!40, dashed] (-0.5, -3) -- (13, -3);
+    
+    \node[left, font=\small] at (0, 3) {3v};
+    \node[left, font=\small] at (0, -3) {-3v};
+
+    \draw[->, >=stealth, line width=1pt] (-0.5, 0) -- (13, 0); % X-axis
+    \draw[->, >=stealth, line width=1pt] (0, -4) -- (0, 4);   % Y-axis
+
+    \foreach \x in {1,2,...,12} {
+        \draw (\x, 0.15) -- (\x, -0.15);
+    }
+    
+    \node[below, font=\small, yshift=-2pt] at (2, 0) {2s};
+    \node[below, font=\small, yshift=-2pt] at (4, 0) {4s};
+    \node[below, font=\small, yshift=-2pt] at (6, 0) {6s};
+    \node[below, font=\small, yshift=-2pt] at (8, 0) {8s};
+    \node[below, font=\small, yshift=-2pt] at (10, 0) {10s};
+    \node[below, font=\small, yshift=-2pt] at (12, 0) {12s};
+    \draw[dashed, line width=1.1pt] (0,0) -- (3,3) -- (6,0) -- (9,-3) -- (12,0);
+    \draw[very thick, black] (0,0) -- (1,0) -- (3,2.2) -- (5,0) -- (8,0) -- (9,-1.2) -- (10,0) -- (12,0);
+
+\end{tikzpicture}
+\end{center}
+
+\end{enumerate}
+
+
+\providecommand{\pckt}{}
+\renewcommand{\pckt}{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round]
+  \ctikzset{bipoles/thickness=1.4}
+  % upper branch
+  \draw (3,6.7) node[vcc]{$+1\,\mathrm{V}$} to[short] (3,6.4)
+        to[R, l_=$1\,\mathrm{k}\Omega$] (3,4.7) -- (3,4.4);
+  \draw (3,2.5) to[D, l_=$D_1$] (3,4.4);
+  % input and output
+  \draw (-0.4,2.5) to[short, o-] (0.2,2.5) to[R, l=$3\,\mathrm{k}\Omega$] (2.2,2.5) -- (3,2.5);
+  \node[left] at (-0.4,2.5) {$v_I$};
+  \draw (3,2.5) -- (5,2.5) to[short, -o] (5.6,2.5) node[right]{$v_O$};
+  \fill (3,2.5) circle (1.7pt);
+  % lower branch
+  \draw (3,0.5) to[D, l_=$D_2$] (3,2.5);
+  \fill (3,0.5) circle (1.7pt);
+  \draw (3,0.5) to[R, l_=$1\,\mathrm{k}\Omega$] (3,-1.4) -- (3,-2.1);
+  \draw (3,0.5) -- (1.5,0.5);
+  \draw (1.5,-2.1) to[D, l=$D_3$] (1.5,0.5);
+  \draw (1.5,-2.1) -- (3,-2.1);
+  \fill (2.25,-2.1) circle (1.7pt);
+  \draw (2.25,-2.1) -- (2.25,-2.4) node[vee]{$-2\,\mathrm{V}$};
+\end{circuitikz}}
+
+\item
+\begin{enumerate}
+\item Sketch and label the voltage-transfer characteristic $v_O$ versus $v_I$ of the circuit shown in the figure over a $\pm10$\,V range of input signals. Use the diode exponential model and assume that all diodes are 1\,mA units (i.e., each exhibits a 0.7\,V drop at a current of 1\,mA). What are the slopes of the characteristics at the extreme $\pm10$\,V levels?
+% \mk{} \yr{}
+\item Assume the constant voltage drop model of 0.7\,V instead, and find $v_O$ for a few values of $v_I$ in this range (e.g.\ $v_I = 2, 1, 0, -1, -2\,\text{V}\ldots$).
+% \mk{} \yr{}
+\end{enumerate}
+\begin{center}
+    \pckt
+\end{center}
+\yr{Book}
+
+
+\end{enumerate}
+
+
+
+
+%%──────────────────────────────────────────────────────────────────────
+\subtopic{cA}{Zener Diode Regulator}
+\label{sub:s1-zener}
+
+\begin{enumerate}
+    
+\item A 6.8\,V Zener diode exhibits its nominal voltage at a test current of 5\,mA. At this current the incremental resistance is $r_z=20\,\Omega$ and knee current $I_{ZK}=0.2\,\text{mA}$. The negative terminal is connected to $V^+=10\,\text{V}$ ($\pm1\,\text{V}$) through a $0.5\,\text{k}\Omega$ resistor; positive terminal is grounded. 
+\begin{enumerate}
+    \item Find $V_o$ with no load at nominal supply.
+    \item Find the change in $V_o$ as supply varies by $\pm1\,\text{V}$.
+    \item Find the change in $V_o$ when $R_L=2\,\text{k}\Omega$ is connected; what happens if $R_L=0.5\,\text{k}\Omega$? 
+    \item Find the minimum $R_L$ for which the diode still operates in breakdown.
+\end{enumerate}
+\mk{20} \yr{EEE 263 | L-2/T-1 | 2024--25}
+
+
+\item A 9.1\,V Zener diode exhibits its nominal voltage at a test current of 28\,mA. At this current the incremental resistance is specified to be 5\,$\Omega$. 
+\begin{enumerate}
+    \item Find $V_{z0}$ in the Zener model.
+    \item Find the Zener voltage at currents of 10\,mA and 100\,mA, respectively.
+    \item Comment on the advantages/disadvantages of running the Zener diode at current values other than the nominal value.
+\end{enumerate}
+\mk{10} \yr{EEE 263 | L-2/T-1 | 2023--24}
+
+
+\item For the circuit given, determine the range of $R_L$ and $I_L$ that will result in $V_{R_L}$ being maintained at 10\,V. Also determine the maximum wattage rating of the diode. The Zener diode is a 10\,V Zener with maximum current rating of 32\,mA.
+\begin{center}
+    \begin{circuitikz}[thick, scale=1.2, transform shape]
+    
+    % Input Terminals & Voltage Source Label
+    \draw (0,3) node[ocirc] {} node[left, yshift=0.1cm] {$+$};
+    \draw (0,0) node[ocirc] {} node[left, yshift=-0.1cm] {$-$};
+    \node at (-0.6, 1.5) {$V_i = 50\text{ V}$};
+
+    % Top Wire & Series Resistor (R below, value above)
+    \draw (0,3) to[R, l_=$R$, name=R1] (4,3);
+    \node[above=0.15cm] at (R1.north) {$1\text{ k}\Omega$};
+    
+    % Current Arrow I_R
+    \draw[->, >=stealth, line width=0.8pt] (2.7, 3.5) -- (3.2, 3.5) node[midway, above] {$I_R$};
+
+    % Zener Diode Branch (Cathode up, Anode down)
+    \draw (4,0) to[zzD] (4,3);    
+    % Zener Labels on the Left side
+    \node[left=0.2cm, align=left] at (4, 1.5) {
+        $V_Z = 10\text{ V}$ \\ 
+        $I_{ZM} = 32\text{ mA}$
+    };
+    
+    % Current Arrow I_Z on the Right side
+    \draw[->, >=stealth, line width=0.8pt] (4.6, 2.2) -- (4.6, 1.4) node[midway, right] {$I_Z$};
+
+    % Variable Load Resistor Branch (R_L)
+    \draw (4,3) -- (7,3)
+          to[vR, l=$R_L$] (7,0)
+          -- (4,0);
+
+    % Corner Current Arrow I_L
+    \draw[->, >=stealth, line width=0.8pt] (6.5, 3.4) -- (7.4, 3.4) -- (7.4, 2.3);
+    \node[right] at (7.4, 2.85) {$I_L$};
+
+    % Bottom Return Path Wire
+    \draw (0,0) -- (4,0);
+
+\end{circuitikz}
+\end{center}
+\mk{18} \yr{EEE 263 | L-2/T-1 | 2022--23}
+
+
+\item The zener diode in the circuit shown is specified to have $V_Z=6.8\,\text{V}$ at $I_Z=5\,\text{mA}$, $r_z=20\,\Omega$ and $I_{ZK}=0.2\,\text{mA}$.
+\begin{enumerate}
+    \item Find $V_0$ at no load conditions.
+    \item What is the minimum value of $R_L$ for which the diode will still operate in the breakdown region?
+\end{enumerate}
+\begin{center}
+    
+    \begin{tikzpicture}[thick,scale=1.2, transform shape]
+        
+        % Top Voltage source arrow and label
+        \draw[-latex] (0, 2) -- (0, 2.8) node[above] {$10\text{ V}$};
+        
+        % Top Resistor (500 Ohm)
+        \draw (0, 2) to[R, l=$500\ \Omega$] (0, 0);
+        
+        % Zener Diode (drawn bottom-to-top so the cathode bar faces upwards)
+        \draw (0, -2) node[ground]{} to[zzD] (0, 0);
+        
+        % Right branch to Load Resistor
+        \draw (0, 0) -- (1.5, 0) node[ocirc]{} -- (3, 0) 
+              to[R, l=$R_L$] (3, -2) node[ground]{};
+        
+        % Output Voltage Labels
+        \node[below] at (1.5, -0.1) {$+$};
+        \node at (1.5, -1) {$V_0$};
+        \node at (1.5, -1.8) {$-$};
+        
+    \end{tikzpicture}
+\end{center}
+\mk{23} \yr{EEE 263 | L-2/T-1 | 2020--21}
+
+
+\item A voltage regulator circuit is to power a car radio at $V_L=9\,\text{V}$ from an automobile battery whose voltage may vary between 11 and 13.6\,V. The current in the radio will vary between 0 (off) and 100\,mA (full volume). Determine the value of the current-limiting resistor $R_i$ and the maximum power dissipated in the Zener diode.
+\begin{center}
+  
+    \begin{circuitikz}[thick,scale=1.2, transform shape]
+        
+        % ==========================================
+        % Voltage Source (Left Branch)
+        % ==========================================
+        % Drawn from bottom to top so the positive terminal (long line) is at the top
+        \draw (0,3) to[battery] (0,0);
+        
+        % Manual labels for the battery to match the specific formatting in the image
+        \node[left, align=center] at (-0.5, 1.5) {$V_{PS} =$\\$11-13.6\text{ V}$};
+        \node[left] at (-0.2, 2.6) {$+$};
+        \node[left] at (-0.2, 0.4) {$-$};
+        
+        % ==========================================
+        % Series Resistor R1 (Top Branch)
+        % ==========================================
+        \draw (0,3) to[R, l=$R_i$, i=$I_I$] (4,3);
+        
+        % ==========================================
+        % Zener Diode (Middle Branch)
+        % ==========================================
+        % Drawn from top to bottom. ``invert" flips the diode so the cathode is facing up.
+        % The current I_Z is drawn flowing downwards.
+        \draw (4,3) to[zzD, invert, i=$I_Z$, *-*] (4,0);
+        
+        % Voltage labels for the Zener Diode
+        \node[right] at (4.2, 2.5) {$+$};
+        \node[right] at (4.2, 1.5) {$V_Z = 9\text{ V}$};
+        \node[right] at (4.2, 0.5) {$-$};
+        
+        % ==========================================
+        % Load - Radio (Right Branch)
+        % ==========================================
+        % Top wire with load current arrow
+        \draw (4,3) to[short, i=$I_L$] (7.5,3);
+        
+        % Shaded Radio box
+        \node[draw, fill=gray!30, minimum width=1.5cm, minimum height=1.2cm] (radio) at (7.5, 1.5) {Radio};
+        
+        % Connecting lines to the Radio box
+        \draw (7.5,3) -- (radio.north);
+        \draw (radio.south) -- (7.5,0);
+        
+        % ==========================================
+        % Bottom Ground/Return Wire
+        % ==========================================
+        \draw (7.5,0) -- (0,0);
+
+        
+    \end{circuitikz}
+\end{center}
+\mk{18} \yr{EEE 263 | L-2/T-1 | 2017--18}
+
+
+\item For the circuit shown in Figure , plot $v_0$ versus $v_{\text{i}}$ and $i_1$ versus $v_{\text{i}}$ over the range $-10 \le v_{\text{i}} \le +10\text{ V}$. Assume the diodes to be ideal.
+ \begin{center}
+\begin{circuitikz}[thick,scale=1.2, transform shape]
+        
+        % ==========================================
+        % Input Stage
+        % ==========================================
+        % Input terminal and 10k Resistor with current label i_i
+        \draw (0, 3) node[left] {\Large $v_i$} node[ocirc] {} 
+              to[R, l=$10\text{ k}\Omega$, i_=$i_i$] (3, 3);
+              
+        % ==========================================
+        % Zener Diode Section
+        % ==========================================
+        % Zener drawn right-to-left so it points left (cathode on the left)
+        \draw (5, 3) to[zzD] (3, 3);
+        
+        % Manual placement for Zener labels (+, -, and Vz)
+        \node at (3.3, 3.4) {\large $+$};
+        \node at (4.7, 3.4) {\large $-$};
+        \node at (4.0, 3.8) {$V_z=3\text{V}$};
+        
+        % ==========================================
+        % Top Rail and Output
+        % ==========================================
+        % Junction dots
+        \node[circ] at (5, 3) {};
+        \node[circ] at (6.5, 3) {};
+        
+        % Wire extending to output terminal
+        \draw (5, 3) -- (7.5, 3) node[ocirc] {} node[right] {\Large $v_o$};
+        
+        % ==========================================
+        % Vertical Branches
+        % ==========================================
+        % Standard Diode pointing UP (cathode on top)
+        \draw (5, 0) to[D] (5, 3);
+        
+        % 10k Output Resistor
+        \draw (6.5, 3) to[R, l=$10\text{ k}\Omega$] (6.5, 0);
+        
+        % ==========================================
+        % Ground Connection
+        % ==========================================
+        % Connect bottoms and attach ground
+        \draw (5, 0) -- (6.5, 0);
+        \node[ground] at (5.75, 0) {};
+        
+    \end{circuitikz}
+\end{center}
+\mk{13.67} \yr{EEE 263 | L-2/T-1 | 2016--17}
+
+
+\item For the circuit shown, find $V_a$ and $I_z$. Now if $R_1$ and $R_2$ are swapped, what will be the value of $V_a$ and $I_z$?
+\begin{center}
+  
+    \begin{circuitikz}[thick,scale=1.2, transform shape]
+        
+        \draw (0,2.5) to[battery1] (0,0);
+        \node at (-0.6, 2.2) {$+$};
+        \node at (-0.7, 1.25) {$10\mathrm{V}$};
+        \node at (-0.6, 0.3) {$-$};
+        
+        % ২. R1 Resistor and Top Wire
+        \draw (0,2.5) to[R, l={$R_1=2\mathrm{K}\Omega$}] (3,2.5) coordinate (top_mid);
+        \draw (0,0) -- (3,0) coordinate (bot_mid);
+        
+        % ৩. Zener Diode Branch
+        % জেনার ডায়োডটি নিচ থেকে উপরে আঁকা হয়েছে যেন ক্যাথোড (দাগ দেওয়া অংশ) উপরে থাকে
+        \draw (bot_mid) to[zzD] (top_mid); 
+        
+        % Zener Labels (Current and Voltage)
+        % Iz কারেন্টের জন্য আলাদা একটি তীর (arrow) আঁকা হয়েছে
+        \draw[->, >=stealth] (2.4, 1.8) -- (2.4, 0.7) node[midway, left] {$I_Z$};
+        \node[right, align=left] at (3.4, 1.25) {$5\mathrm{V}$\\zener};
+        
+        % ৪. R2 Resistor Branch
+        \draw (top_mid) -- (5,2.5) coordinate (top_right);
+        \draw (bot_mid) -- (5,0) coordinate (bot_right);
+        \draw (top_right) to[R, l={$R_2=3\mathrm{K}\Omega$} , a=$V_a$] (bot_right);
+        
+        % ৫. Output Terminals (Vo)
+        \draw (top_right) to[short, -o] (6,2.5) node[above] {$+$};
+        \draw (bot_right) to[short, -o] (6,0) node[below] {$-$};
+
+        
+    \end{circuitikz}
+\end{center}
+
+\mk{15} \yr{EEE 263 | L-2/T-1 | 2015--16}
+
+
+\item Calculate the regulated load voltage $V_L$ and the current $I_Z$ flowing through the zener diode in the voltage regulator circuit shown.
+\begin{center}
+      \begin{circuitikz}[thick,scale=1.2, transform shape]
+        
+        % ===================================================
+        % Zener Diode & BJT Regulator Circuit
+        % ===================================================
+        
+        % 1. Input 30V DC Source
+        \draw (0,3) to[battery1, l={$30\mathrm{V}$}] (0,0) node[ground]{};
+        
+        % 2. 1.5k Ohm Resistor on top wire
+        \draw (0,3) to[R, l={$1.5\mathrm{k}\Omega$}] (3,3);
+        
+        % 3. Zener Diode branch
+        % Drawn from bottom to top so the cathode (bar) is at the top
+        \draw (3,1.5) to[zzD, l_={$V_Z=9.3\mathrm{V}$}] (3,3);
+        
+        % Iz Current Arrow (drawn manually for exact placement like the image)
+        \draw[->, >=stealth] (2.2, 2.7) -- (2.2, 1.8) node[midway, left] {$I_Z$};
+        
+        % 4. NPN BJT (Positioned cleanly at coordinates 5, 1.5)
+        \node[npn] (Q1) at (5, 1.5) {};
+        \node at (6.1, 1.5) {$\beta_{DC}=100$};
+        
+        % 5. Connections to BJT using its built-in anchors (Base, Collector, Emitter)
+        % Base connection from Zener branch junction to Q1.B
+        \draw (3,1.5) node[circ]{} -- (Q1.B);
+        
+        % Collector connection going UP from Q1.C to the top wire
+        \draw (Q1.C) -- (5,3);
+        
+        % Emitter connection going DOWN from Q1.E to ground
+        \draw (Q1.E) -- (5,0) node[ground]{};
+        
+        % 6. Top wire connecting Zener, BJT Collector, and Output
+        \draw (3,3) node[circ]{} -- (5,3) node[circ]{} -- (7.5,3);
+        
+        % 7. Output terminal and Load Resistor (RL)
+        \draw (7.5,3) node[ocirc]{} to[R, l={$R_L=1\mathrm{k}\Omega$}] (7.5,0) node[ground]{};
+        
+        % 8. VL Voltage Label (+, arrow, -) placed left of the load resistor
+        \node at (9.7, 2.7) {$+$};
+        \draw[->, >=stealth] (9.7, 2.4) -- (9.7, 0.6) node[midway, right] {$V_L$};
+        \node at (9.7, 0.3) {$-$};
+        
+    \end{circuitikz}
+\end{center}
+\mk{16} \yr{EEE 263 | L-2/T-1 | 2014--15}
+
+
+\end{enumerate}
+
+%%──────────────────────────────────────────────────────────────────────
+\subtopic{cA}{Battery Charger Circuit}
+\label{sub:s1-battery}
+
+\begin{enumerate}
+    
+\item The circuit shown is for charging a 5\,V battery with $V_s = 10\sin(100\pi t)$. Find:
+\begin{enumerate}
+  \item Duty cycle (fraction of each cycle during which the diode conducts).
+  \item Draw the diode current waveform indicating peak value.
+  \item Maximum reverse bias voltage that appears across the diode.
+\end{enumerate}
+\begin{center}
+      \begin{circuitikz}[thick,scale=1.2, transform shape]
+        
+        % 1. AC Source (Left Branch)
+        \draw (0,0) to[sV] (0,2.5);
+        \node[left] at (-0.4, 1.25) {$v_s$};
+        \node at (-0.3, 2.1) {$+$};
+        \node at (-0.3, 0.4) {$-$};
+        
+        % 2. Top Branch (Resistor & Diode)
+        % i=$i_D$ দিয়ে ডায়োডের সাথে কারেন্টের দিক দেখানো হয়েছে
+        \draw (0,2.5) to[R, l=$100\Omega$] (2.5, 2.5) 
+              to[D, i=$i_D$] (5, 2.5);
+        
+        % 3. DC Source / Battery (Right Branch)
+        \draw (5, 2.5) to[battery1] (5, 0);
+        \node[right] at (5.3, 1.25) {$5\mathrm{V}$};
+        \node at (4.6, 2.1) {$+$};
+        \node at (4.6, 0.4) {$-$};
+        
+        % 4. Bottom Branch (Wire)
+        \draw (0,0) -- (5,0);
+        
+    \end{circuitikz}
+\end{center}
+\mk{15} \yr{EEE 263 | L-2/T-1 | 2015--16}
+
+
+\item A circuit for charging a 10\,V battery is shown in the figure. If $V_s$ is a sinusoid with 20\,V peak amplitude, find the fraction of each cycle during which the diode conducts. Assume the diode is ideal. Also find the peak value of the diode current and the maximum reverse bias voltage that appears across the diode.
+
+\begin{center}
+\begin{circuitikz}[thick,american, thick, scale=1.2, transform shape]
+  
+  % Left branch (Voltage Source)
+  \draw (0,3) to[V, l=$v_s$] (0,0);
+  
+  % Top branch (Resistor and Diode)
+  \draw (0,3) to[R, l_=$100\,\Omega$] (3,3)
+        to[D] (6,3);
+  
+  % Right branch (Battery)
+  \draw (6,3) to[battery1] (6,0);
+  
+  % Manual labels for the 10V battery
+  \node at (6.6, 2.5) {$+$};
+  \node at (6.6, 1.5) {$10\text{V}$};
+  \node at (6.6, 0.5) {$-$};
+  
+  % Bottom return wire
+  \draw (0,0) -- (6,0);
+  
+\end{circuitikz}
+\end{center}
+
+\mk{15} \yr{EEE 263 | L-2/T-1 | 2011--12}
+
+
+\end{enumerate}
+
+
+
 %%──────────────────────────────────────────────────────────────────────
 \subtopic{cA}{Peak Rectifier}
 \label{sub:s1-peak}
@@ -934,7 +1614,13 @@
 \mk{10} \yr{EEE 263 | L-2/T-1 | 2017--18}
 
 
-\item Consider a half-wave peak rectifier fed with a voltage having a triangular waveform with 20\,V peak-to-peak amplitude, zero average and 1\,kHz frequency. Load resistance $R=100\,\Omega$ and filter capacitor $C=100\,\mu$F. Assume the diode has a forward voltage drop of 0.7\,V when conducting. Find: (i) average DC output voltage, (ii) time interval during which the diode conducts, (iii) average diode current during conduction, (iv) maximum diode current.
+\item Consider a half-wave peak rectifier fed with a voltage having a triangular waveform with 20\,V peak-to-peak amplitude, zero average and 1\,kHz frequency. Load resistance $R=100\,\Omega$ and filter capacitor $C=100\,\mu$F. Assume the diode has a forward voltage drop of 0.7\,V when conducting. Find:
+\begin{enumerate}
+    \item average DC output voltage
+    \item time interval during which the diode conducts
+    \item average diode current during conduction
+    \item maximum diode current
+\end{enumerate}
 \mk{20} \yr{EEE 263 | L-2/T-1 | 2016--17}
 
 
@@ -950,180 +1636,6 @@
 
 \end{enumerate}
 
-%%──────────────────────────────────────────────────────────────────────
-\subtopic{cA}{I-V Characteristics \& Waveform Analysis}
-\label{sub:s1-iv}
-
-\begin{enumerate}
-    
-\item 
-\begin{enumerate}
-    
-\item What would be the output voltage if the diode and the resistor were connected in parallel?
-\mk{10.67} \yr{EEE 263 | L-2/T-1 | 2013--14}
-
-\begin{center}
-          \begin{tikzpicture}[thick,scale=1.0]
-            % Input Voltage Source
-            \draw (0,1) circle (0.4);
-            \node[left] at (-0.5, 1.4) {$+$};
-            \node[left] at (-0.5, 0.6) {$-$};
-            \node[left] at (-0.7, 1) {$V_{\text{in}}$};
-            \draw (0,0) -- (0,0.6);
-            \draw (0,1.4) -- (0,2);
-            
-            % Diode Connection
-            \draw (0,2) -- (0.5,2);
-            \draw (0.5, 2) to[D] (2.5, 2);
-            \draw (2.5,2) -- (3,2);
-            
-            % Output Resistor (1 Ohm)
-            \draw (3,2) to[R, l=$1\,\Omega$] (3,0);
-            
-            % Output Voltage Labels
-            \node[right] at (3.5, 1.7) {$+$};
-            \node[right] at (3.5, 0.3) {$-$};
-            \node[right] at (3.7, 1) {$V_{\text{out}}$};
-            
-            % Bottom Wire Connection
-            \draw (3,0) -- (0,0);
-        \end{tikzpicture}
-
-    % ===================================================
-    % Figure 2: V-I Characteristic Graph
-
-        \begin{tikzpicture}[thick,scale=0.7]
-            % Axes
-            \draw[->] (-4, 0) -- (4, 0) node[below] {$V$};
-            \draw[->] (0, -3.5) -- (0, 3) node[left] {$I$};
-
-            % Curve
-            \draw[very thick] (-3, -3) -- (-3, 0) -- (1, 0) -- (3.5, 3.125);
-
-            % Labels and Ticks
-            \draw (-3, 0.15) -- (-3, -0.15) node[below] {$-3\text{v}$};
-            \draw (1, 0.15) -- (1, -0.15) node[below] {$1\text{v}$};
-            \node[right] at (1.2, 1.0) {\small $\text{slope} = 1\text{volt/Amp}$};
-        \end{tikzpicture}
-
-    % ===================================================
-    % Figure 3: Staircase Waveform Graph
-    % ===================================================
-
-        \begin{tikzpicture}[thick,scale=0.55]
-            % Axes
-            \draw[->] (0, 0) -- (13, 0) node[below] {time};
-            \draw (0, -3.5) -- (0, 3.5);
-
-            % Y-axis labels
-            \foreach \y in {-3,-2,-1, 1,2,3} {
-                \draw (-0.1, \y) -- (0.1, \y);
-                \node[left] at (-0.1, \y) {$\y\text{v}$};
-            }
-            \node[left] at (-0.1, 0) {$0\text{v}$};
-
-            % Staircase Curve
-            \draw[very thick] (0,0) 
-                -- (1,0) -- (1,1)
-                -- (2,1) -- (2,2)
-                -- (3,2) -- (3,3)
-                -- (4,3) -- (4,2)
-                -- (5,2) -- (5,1)
-                -- (6,1) -- (6,0)
-                -- (7,0) -- (7,-1)
-                -- (8,-1) -- (8,-2)
-                -- (9,-2) -- (9,-3)
-                -- (10,-3) -- (10,-2)
-                -- (11,-2) -- (11,-1)
-                -- (12,-1) -- (12,0) -- (12.5,0);
-        \end{tikzpicture}
-\end{center}
-
-\item The I-V characteristics of a diode and a sinusoidal input voltage signal $V_{in}$ are given in the figure. Draw the output voltage $V_{out}$ across the resistor.
-\mk{16} 
-\item What would be the output voltage $V_{out}$ across the resistor if the diode had a constant 0.7\,V voltage drop?
-\mk{10} 
-
-\end{enumerate}
-
-
-\item
-\begin{enumerate}
-\item An AC voltage source is applied to a series combination of a diode and a resistance. The dotted line in the figure is the input voltage waveform ($V_{ac}$) and the solid line is the output voltage waveform ($V_R$) across the resistance. Copy $V_R$ from the figure to your answer script exactly to scale and draw the voltage waveform across the diode over the same graph. Given that $\frac{dV_{ac}}{dt}=1\,\text{V/sec}$ when $V_{ac}$ is rising and $\frac{dV_{ac}}{dt}=-1\,\text{V/sec}$ when $V_{ac}$ is falling.
-
-\begin{center}
-\begin{tikzpicture}[thick,scale=0.8]
-    % ৩ভোল্ট এবং -৩ভোল্ট এর অনুভূমিক ডটেড গাইডলাইন
-    \draw[gray!40, dashed] (-0.5, 3) -- (13, 3);
-    \draw[gray!40, dashed] (-0.5, -3) -- (13, -3);
-    
-    % Y-axis এর লেবেল (3v এবং -3v)
-    \node[left, font=\small] at (0, 3) {3v};
-    \node[left, font=\small] at (0, -3) {-3v};
-
-    % অক্ষরেখা (Axes) অংকন
-    \draw[->, >=stealth, line width=1pt] (-0.5, 0) -- (13, 0); % X-axis
-    \draw[->, >=stealth, line width=1pt] (0, -4) -- (0, 4);   % Y-axis
-
-    % X-axis এর প্রতিটি ১ সেকেন্ড পর পর টিক মার্ক (Ticks)
-    \foreach \x in {1,2,...,12} {
-        \draw (\x, 0.15) -- (\x, -0.15);
-    }
-    
-    % ছবিতে থাকা নির্দিষ্ট টাইম লেবেলগুলো (2s, 4s, 6s, 8s, 10s, 12s)
-    \node[below, font=\small, yshift=-2pt] at (2, 0) {2s};
-    \node[below, font=\small, yshift=-2pt] at (4, 0) {4s};
-    \node[below, font=\small, yshift=-2pt] at (6, 0) {6s};
-    \node[below, font=\small, yshift=-2pt] at (8, 0) {8s};
-    \node[below, font=\small, yshift=-2pt] at (10, 0) {10s};
-    \node[below, font=\small, yshift=-2pt] at (12, 0) {12s};
-
-    % ১. ড্যাশড ওয়েভফর্ম (Dashed Triangle Wave)
-    % (0,0) থেকে শুরু হয়ে 3s এ পিক (3v), 6s এ শূন্য, 9s এ নেগেটিভ পিক (-3v), 12s এ শেষ।
-    \draw[dashed, line width=1.1pt] (0,0) -- (3,3) -- (6,0) -- (9,-3) -- (12,0);
-
-    % ২. সলিড ওয়েভফর্ম (Solid Output Waveform)
-    % ছবি অনুযায়ী: 1s পর্যন্ত 0, তারপর 3s এ পজিটিভ পিক, 5s এ আবার 0। 
-    % এরপর 8s পর্যন্ত 0, 9s এ ছোট নেগেটিভ পিক, এবং 10s থেকে 12s পর্যন্ত আবার 0।
-    \draw[very thick, black] (0,0) -- (1,0) -- (3,2.2) -- (5,0) -- (8,0) -- (9,-1.2) -- (10,0) -- (12,0);
-
-\end{tikzpicture}
-\end{center}
-
-\mk{20} \yr{EEE 263 | L-2/T-1 | 2012--13}
-
-
-
-
-\item Draw the I-V characteristics curve of the above diode exactly to scale (mention the voltage(s) at which the diode begins conduction).
-\mk{16} \yr{EEE 263 | L-2/T-1 | 2012--13}
-
-\item Draw the voltage waveform across the diode if it had been connected in parallel to the resistance.
-\mk{10} \yr{EEE 263 | L-2/T-1 | 2012--13}
-
-\end{enumerate}
-
-
-\end{enumerate}
-
-%%──────────────────────────────────────────────────────────────────────
-\subtopic{cA}{Diode Thermal Characteristics}
-\label{sub:s1-thermal}
-
-\begin{enumerate}
-    
-\item When a 15\,A current is applied to a particular diode, the junction voltage immediately becomes 0.7\,V. As power dissipation raises its temperature, the voltage eventually reaches 0.6\,V. (i) What is the apparent rise in junction temperature? (ii) What is the temperature rise per watt of power dissipation? (iii) What is the power dissipated in the diode in its final state?
-\mk{15} \yr{EEE 263 | L-2/T-1 | 2024--25}
-
-
-\item When a 15\,A current is applied to a particular diode, the junction voltage immediately becomes 0.7\,V. As power dissipation raises its temperature, the voltage eventually reaches 0.58\,V.\\
- (i) What is the apparent rise in junction temperature? \\
- (ii) What is the temperature rise per watt of power dissipation? \\
- (iii) What is the power dissipated in the diode in its final state?\\
-\mk{10} \yr{EEE 263 | L-2/T-1 | 2023--24}
-
-
-\end{enumerate}
 
 %%──────────────────────────────────────────────────────────────────────
 \subtopic{cA}{Bridge Rectifier}
@@ -1301,370 +1813,26 @@
 
 \end{enumerate}
 
+
+
 %%──────────────────────────────────────────────────────────────────────
-\subtopic{cA}{Zener Diode Regulator}
-\label{sub:s1-zener}
+\subtopic{cA}{Diode Thermal Characteristics}
+\label{sub:s1-thermal}
 
 \begin{enumerate}
     
-\item A 6.8\,V Zener diode exhibits its nominal voltage at a test current of 5\,mA. At this current the incremental resistance is $r_z=20\,\Omega$ and knee current $I_{ZK}=0.2\,\text{mA}$. The negative terminal is connected to $V^+=10\,\text{V}$ ($\pm1\,\text{V}$) through a $0.5\,\text{k}\Omega$ resistor; positive terminal is grounded. (i) Find $V_o$ with no load at nominal supply. (ii) Find the change in $V_o$ as supply varies by $\pm1\,\text{V}$. (iii) Find the change in $V_o$ when $R_L=2\,\text{k}\Omega$ is connected; what happens if $R_L=0.5\,\text{k}\Omega$? (iv) Find the minimum $R_L$ for which the diode still operates in breakdown.
-\mk{20} \yr{EEE 263 | L-2/T-1 | 2024--25}
+\item When a 15\,A current is applied to a particular diode, the junction voltage immediately becomes 0.7\,V. As power dissipation raises its temperature, the voltage eventually reaches 0.6\,V. (i) What is the apparent rise in junction temperature? (ii) What is the temperature rise per watt of power dissipation? (iii) What is the power dissipated in the diode in its final state?
+\mk{15} \yr{EEE 263 | L-2/T-1 | 2024--25}
 
 
-\item A 9.1\,V Zener diode exhibits its nominal voltage at a test current of 28\,mA. At this current the incremental resistance is specified to be 5\,$\Omega$. (i) Find $V_{z0}$ in the Zener model. (ii) Find the Zener voltage at currents of 10\,mA and 100\,mA, respectively. (iii) Comment on the advantages/disadvantages of running the Zener diode at current values other than the nominal value.
+\item When a 15\,A current is applied to a particular diode, the junction voltage immediately becomes 0.7\,V. As power dissipation raises its temperature, the voltage eventually reaches 0.58\,V.\\
+ (i) What is the apparent rise in junction temperature? \\
+ (ii) What is the temperature rise per watt of power dissipation? \\
+ (iii) What is the power dissipated in the diode in its final state?\\
 \mk{10} \yr{EEE 263 | L-2/T-1 | 2023--24}
 
 
-\item For the circuit given, determine the range of $R_L$ and $I_L$ that will result in $V_{R_L}$ being maintained at 10\,V. Also determine the maximum wattage rating of the diode. The Zener diode is a 10\,V Zener with maximum current rating of 32\,mA.
-\begin{center}
-    \begin{circuitikz}[thick, scale=1.2, transform shape]
-    
-    % Input Terminals & Voltage Source Label
-    \draw (0,3) node[ocirc] {} node[left, yshift=0.1cm] {$+$};
-    \draw (0,0) node[ocirc] {} node[left, yshift=-0.1cm] {$-$};
-    \node at (-0.6, 1.5) {$V_i = 50\text{ V}$};
-
-    % Top Wire & Series Resistor (R below, value above)
-    \draw (0,3) to[R, l_=$R$, name=R1] (4,3);
-    \node[above=0.15cm] at (R1.north) {$1\text{ k}\Omega$};
-    
-    % Current Arrow I_R
-    \draw[->, >=stealth, line width=0.8pt] (2.7, 3.5) -- (3.2, 3.5) node[midway, above] {$I_R$};
-
-    % Zener Diode Branch (Cathode up, Anode down)
-    \draw (4,0) to[zzD] (4,3);    
-    % Zener Labels on the Left side
-    \node[left=0.2cm, align=left] at (4, 1.5) {
-        $V_Z = 10\text{ V}$ \\ 
-        $I_{ZM} = 32\text{ mA}$
-    };
-    
-    % Current Arrow I_Z on the Right side
-    \draw[->, >=stealth, line width=0.8pt] (4.6, 2.2) -- (4.6, 1.4) node[midway, right] {$I_Z$};
-
-    % Variable Load Resistor Branch (R_L)
-    \draw (4,3) -- (7,3)
-          to[vR, l=$R_L$] (7,0)
-          -- (4,0);
-
-    % Corner Current Arrow I_L
-    \draw[->, >=stealth, line width=0.8pt] (6.5, 3.4) -- (7.4, 3.4) -- (7.4, 2.3);
-    \node[right] at (7.4, 2.85) {$I_L$};
-
-    % Bottom Return Path Wire
-    \draw (0,0) -- (4,0);
-
-\end{circuitikz}
-\end{center}
-\mk{18} \yr{EEE 263 | L-2/T-1 | 2022--23}
-
-
-\item The zener diode in the circuit shown is specified to have $V_Z=6.8\,\text{V}$ at $I_Z=5\,\text{mA}$, $r_z=20\,\Omega$ and $I_{ZK}=0.2\,\text{mA}$. (i) Find $V_0$ at no load conditions. (ii) What is the minimum value of $R_L$ for which the diode will still operate in the breakdown region?
-\begin{center}
-    
-    \begin{tikzpicture}[thick,scale=1.2, transform shape]
-        
-        % Top Voltage source arrow and label
-        \draw[-latex] (0, 2) -- (0, 2.8) node[above] {$10\text{ V}$};
-        
-        % Top Resistor (500 Ohm)
-        \draw (0, 2) to[R, l=$500\ \Omega$] (0, 0);
-        
-        % Zener Diode (drawn bottom-to-top so the cathode bar faces upwards)
-        \draw (0, -2) node[ground]{} to[zzD] (0, 0);
-        
-        % Right branch to Load Resistor
-        \draw (0, 0) -- (1.5, 0) node[ocirc]{} -- (3, 0) 
-              to[R, l=$R_L$] (3, -2) node[ground]{};
-        
-        % Output Voltage Labels
-        \node[below] at (1.5, -0.1) {$+$};
-        \node at (1.5, -1) {$V_0$};
-        \node at (1.5, -1.8) {$-$};
-        
-    \end{tikzpicture}
-\end{center}
-\mk{23} \yr{EEE 263 | L-2/T-1 | 2020--21}
-
-
-\item A voltage regulator circuit is to power a car radio at $V_L=9\,\text{V}$ from an automobile battery whose voltage may vary between 11 and 13.6\,V. The current in the radio will vary between 0 (off) and 100\,mA (full volume). Determine the value of the current-limiting resistor $R_i$ and the maximum power dissipated in the Zener diode.
-\begin{center}
-  
-    \begin{circuitikz}[thick,scale=1.2, transform shape]
-        
-        % ==========================================
-        % Voltage Source (Left Branch)
-        % ==========================================
-        % Drawn from bottom to top so the positive terminal (long line) is at the top
-        \draw (0,3) to[battery] (0,0);
-        
-        % Manual labels for the battery to match the specific formatting in the image
-        \node[left, align=center] at (-0.5, 1.5) {$V_{PS} =$\\$11-13.6\text{ V}$};
-        \node[left] at (-0.2, 2.6) {$+$};
-        \node[left] at (-0.2, 0.4) {$-$};
-        
-        % ==========================================
-        % Series Resistor R1 (Top Branch)
-        % ==========================================
-        \draw (0,3) to[R, l=$R_i$, i=$I_I$] (4,3);
-        
-        % ==========================================
-        % Zener Diode (Middle Branch)
-        % ==========================================
-        % Drawn from top to bottom. ``invert" flips the diode so the cathode is facing up.
-        % The current I_Z is drawn flowing downwards.
-        \draw (4,3) to[zzD, invert, i=$I_Z$, *-*] (4,0);
-        
-        % Voltage labels for the Zener Diode
-        \node[right] at (4.2, 2.5) {$+$};
-        \node[right] at (4.2, 1.5) {$V_Z = 9\text{ V}$};
-        \node[right] at (4.2, 0.5) {$-$};
-        
-        % ==========================================
-        % Load - Radio (Right Branch)
-        % ==========================================
-        % Top wire with load current arrow
-        \draw (4,3) to[short, i=$I_L$] (7.5,3);
-        
-        % Shaded Radio box
-        \node[draw, fill=gray!30, minimum width=1.5cm, minimum height=1.2cm] (radio) at (7.5, 1.5) {Radio};
-        
-        % Connecting lines to the Radio box
-        \draw (7.5,3) -- (radio.north);
-        \draw (radio.south) -- (7.5,0);
-        
-        % ==========================================
-        % Bottom Ground/Return Wire
-        % ==========================================
-        \draw (7.5,0) -- (0,0);
-
-        
-    \end{circuitikz}
-\end{center}
-\mk{18} \yr{EEE 263 | L-2/T-1 | 2017--18}
-
-
-\item For the circuit shown in Figure , plot $v_0$ versus $v_{\text{i}}$ and $i_1$ versus $v_{\text{i}}$ over the range $-10 \le v_{\text{i}} \le +10\text{ V}$. Assume the diodes to be ideal.
- \begin{center}
-\begin{circuitikz}[thick,scale=1.2, transform shape]
-        
-        % ==========================================
-        % Input Stage
-        % ==========================================
-        % Input terminal and 10k Resistor with current label i_i
-        \draw (0, 3) node[left] {\Large $v_i$} node[ocirc] {} 
-              to[R, l=$10\text{ k}\Omega$, i_=$i_i$] (3, 3);
-              
-        % ==========================================
-        % Zener Diode Section
-        % ==========================================
-        % Zener drawn right-to-left so it points left (cathode on the left)
-        \draw (5, 3) to[zzD] (3, 3);
-        
-        % Manual placement for Zener labels (+, -, and Vz)
-        \node at (3.3, 3.4) {\large $+$};
-        \node at (4.7, 3.4) {\large $-$};
-        \node at (4.0, 3.8) {$V_z=3\text{V}$};
-        
-        % ==========================================
-        % Top Rail and Output
-        % ==========================================
-        % Junction dots
-        \node[circ] at (5, 3) {};
-        \node[circ] at (6.5, 3) {};
-        
-        % Wire extending to output terminal
-        \draw (5, 3) -- (7.5, 3) node[ocirc] {} node[right] {\Large $v_o$};
-        
-        % ==========================================
-        % Vertical Branches
-        % ==========================================
-        % Standard Diode pointing UP (cathode on top)
-        \draw (5, 0) to[D] (5, 3);
-        
-        % 10k Output Resistor
-        \draw (6.5, 3) to[R, l=$10\text{ k}\Omega$] (6.5, 0);
-        
-        % ==========================================
-        % Ground Connection
-        % ==========================================
-        % Connect bottoms and attach ground
-        \draw (5, 0) -- (6.5, 0);
-        \node[ground] at (5.75, 0) {};
-        
-    \end{circuitikz}
-\end{center}
-\mk{13.67} \yr{EEE 263 | L-2/T-1 | 2016--17}
-
-
-\item For the circuit shown, find $V_a$ and $I_z$. Now if $R_1$ and $R_2$ are swapped, what will be the value of $V_a$ and $I_z$?
-\begin{center}
-  
-    \begin{circuitikz}[thick,scale=1.2, transform shape]
-        
-        % ১. DC Voltage Source
-        % battery1 ব্যবহার করলে ডিফল্টভাবে উপরের দিকে পজিটিভ (বড় দাগ) থাকে
-        \draw (0,2.5) to[battery1] (0,0);
-        \node at (-0.6, 2.2) {$+$};
-        \node at (-0.7, 1.25) {$10\mathrm{V}$};
-        \node at (-0.6, 0.3) {$-$};
-        
-        % ২. R1 Resistor and Top Wire
-        \draw (0,2.5) to[R, l={$R_1=2\mathrm{K}\Omega$}] (3,2.5) coordinate (top_mid);
-        \draw (0,0) -- (3,0) coordinate (bot_mid);
-        
-        % ৩. Zener Diode Branch
-        % জেনার ডায়োডটি নিচ থেকে উপরে আঁকা হয়েছে যেন ক্যাথোড (দাগ দেওয়া অংশ) উপরে থাকে
-        \draw (bot_mid) to[zzD] (top_mid); 
-        
-        % Zener Labels (Current and Voltage)
-        % Iz কারেন্টের জন্য আলাদা একটি তীর (arrow) আঁকা হয়েছে
-        \draw[->, >=stealth] (2.4, 1.8) -- (2.4, 0.7) node[midway, left] {$I_Z$};
-        \node[right, align=left] at (3.4, 1.25) {$5\mathrm{V}$\\zener};
-        
-        % ৪. R2 Resistor Branch
-        \draw (top_mid) -- (5,2.5) coordinate (top_right);
-        \draw (bot_mid) -- (5,0) coordinate (bot_right);
-        \draw (top_right) to[R, l={$R_2=3\mathrm{K}\Omega$} , a=$V_a$] (bot_right);
-        
-        % ৫. Output Terminals (Vo)
-        \draw (top_right) to[short, -o] (6,2.5) node[above] {$+$};
-        \draw (bot_right) to[short, -o] (6,0) node[below] {$-$};
-
-        
-    \end{circuitikz}
-\end{center}
-
-\mk{15} \yr{EEE 263 | L-2/T-1 | 2015--16}
-
-
-\item Calculate the regulated load voltage $V_L$ and the current $I_Z$ flowing through the zener diode in the voltage regulator circuit shown.
-\begin{center}
-      \begin{circuitikz}[thick,scale=1.2, transform shape]
-        
-        % ===================================================
-        % Zener Diode & BJT Regulator Circuit
-        % ===================================================
-        
-        % 1. Input 30V DC Source
-        \draw (0,3) to[battery1, l={$30\mathrm{V}$}] (0,0) node[ground]{};
-        
-        % 2. 1.5k Ohm Resistor on top wire
-        \draw (0,3) to[R, l={$1.5\mathrm{k}\Omega$}] (3,3);
-        
-        % 3. Zener Diode branch
-        % Drawn from bottom to top so the cathode (bar) is at the top
-        \draw (3,1.5) to[zzD, l_={$V_Z=9.3\mathrm{V}$}] (3,3);
-        
-        % Iz Current Arrow (drawn manually for exact placement like the image)
-        \draw[->, >=stealth] (2.2, 2.7) -- (2.2, 1.8) node[midway, left] {$I_Z$};
-        
-        % 4. NPN BJT (Positioned cleanly at coordinates 5, 1.5)
-        \node[npn] (Q1) at (5, 1.5) {};
-        \node at (6.1, 1.5) {$\beta_{DC}=100$};
-        
-        % 5. Connections to BJT using its built-in anchors (Base, Collector, Emitter)
-        % Base connection from Zener branch junction to Q1.B
-        \draw (3,1.5) node[circ]{} -- (Q1.B);
-        
-        % Collector connection going UP from Q1.C to the top wire
-        \draw (Q1.C) -- (5,3);
-        
-        % Emitter connection going DOWN from Q1.E to ground
-        \draw (Q1.E) -- (5,0) node[ground]{};
-        
-        % 6. Top wire connecting Zener, BJT Collector, and Output
-        \draw (3,3) node[circ]{} -- (5,3) node[circ]{} -- (7.5,3);
-        
-        % 7. Output terminal and Load Resistor (RL)
-        \draw (7.5,3) node[ocirc]{} to[R, l={$R_L=1\mathrm{k}\Omega$}] (7.5,0) node[ground]{};
-        
-        % 8. VL Voltage Label (+, arrow, -) placed left of the load resistor
-        \node at (9.7, 2.7) {$+$};
-        \draw[->, >=stealth] (9.7, 2.4) -- (9.7, 0.6) node[midway, right] {$V_L$};
-        \node at (9.7, 0.3) {$-$};
-        
-    \end{circuitikz}
-\end{center}
-\mk{16} \yr{EEE 263 | L-2/T-1 | 2014--15}
-
-
 \end{enumerate}
-
-
-
-%%──────────────────────────────────────────────────────────────────────
-\subtopic{cA}{Battery Charger Circuit}
-\label{sub:s1-battery}
-
-\begin{enumerate}
-    
-\item The circuit shown is for charging a 5\,V battery with $V_s = 10\sin(100\pi t)$. Find:
-\begin{enumerate}
-  \item Duty cycle (fraction of each cycle during which the diode conducts).
-  \item Draw the diode current waveform indicating peak value.
-  \item Maximum reverse bias voltage that appears across the diode.
-\end{enumerate}
-\begin{center}
-      \begin{circuitikz}[thick,scale=1.2, transform shape]
-        
-        % 1. AC Source (Left Branch)
-        \draw (0,0) to[sV] (0,2.5);
-        \node[left] at (-0.4, 1.25) {$v_s$};
-        \node at (-0.3, 2.1) {$+$};
-        \node at (-0.3, 0.4) {$-$};
-        
-        % 2. Top Branch (Resistor & Diode)
-        % i=$i_D$ দিয়ে ডায়োডের সাথে কারেন্টের দিক দেখানো হয়েছে
-        \draw (0,2.5) to[R, l=$100\Omega$] (2.5, 2.5) 
-              to[D, i=$i_D$] (5, 2.5);
-        
-        % 3. DC Source / Battery (Right Branch)
-        \draw (5, 2.5) to[battery1] (5, 0);
-        \node[right] at (5.3, 1.25) {$5\mathrm{V}$};
-        \node at (4.6, 2.1) {$+$};
-        \node at (4.6, 0.4) {$-$};
-        
-        % 4. Bottom Branch (Wire)
-        \draw (0,0) -- (5,0);
-        
-    \end{circuitikz}
-\end{center}
-\mk{15} \yr{EEE 263 | L-2/T-1 | 2015--16}
-
-
-\item A circuit for charging a 10\,V battery is shown in the figure. If $V_s$ is a sinusoid with 20\,V peak amplitude, find the fraction of each cycle during which the diode conducts. Assume the diode is ideal. Also find the peak value of the diode current and the maximum reverse bias voltage that appears across the diode.
-
-\begin{center}
-\begin{circuitikz}[thick,american, thick, scale=1.2, transform shape]
-  
-  % Left branch (Voltage Source)
-  \draw (0,3) to[V, l=$v_s$] (0,0);
-  
-  % Top branch (Resistor and Diode)
-  \draw (0,3) to[R, l_=$100\,\Omega$] (3,3)
-        to[D] (6,3);
-  
-  % Right branch (Battery)
-  \draw (6,3) to[battery1] (6,0);
-  
-  % Manual labels for the 10V battery
-  \node at (6.6, 2.5) {$+$};
-  \node at (6.6, 1.5) {$10\text{V}$};
-  \node at (6.6, 0.5) {$-$};
-  
-  % Bottom return wire
-  \draw (0,0) -- (6,0);
-  
-\end{circuitikz}
-\end{center}
-
-\mk{15} \yr{EEE 263 | L-2/T-1 | 2011--12}
-
-
-\end{enumerate}
-
-
 
 
 \subtopic{cA}{Special Purpose Diodes/Thyristors}
@@ -2421,7 +2589,10 @@
 \label{sub:s2-clip-clamp}
 
 \begin{enumerate}
-    \item Design a circuit that achieves the following transfer characteristic ($v_o$ versus $v_i$). \textit{(Input: $5\text{ V}$ to $-5\text{ V}$, i.e.\ $10\text{ V}$ p-p)}
+
+% Needs in the preamble: tikz, circuitikz (colour cE and the ansbox style are taken from your document)
+
+\item \textbf{(i)} Design a circuit that achieves the following transfer characteristic ($v_o$ versus $v_i$). \textit{(Input: $5\text{ V}$ to $-5\text{ V}$, i.e.\ $10\text{ V}$ p-p)}
 \begin{center}
 \begin{tikzpicture}[x=0.55cm, y=0.55cm, thick, >=Stealth, font=\small]
     \draw[->] (-6.4,0) -- (6.7,0) node[right] {$v_i\,(\mathrm{V})$};
@@ -2446,7 +2617,7 @@
 \yr{Slide}
 
 
-\item Design a circuit that achieves the following transfer characteristic ($v_o$ versus $v_i$). \textit{(Input: $5\text{ V}$ to $-5\text{ V}$, i.e.\ $10\text{ V}$ p-p)}
+\item \textbf{(ii)} Design a circuit that achieves the following transfer characteristic ($v_o$ versus $v_i$). \textit{(Input: $5\text{ V}$ to $-5\text{ V}$, i.e.\ $10\text{ V}$ p-p)}
 \begin{center}
 \begin{tikzpicture}[x=0.55cm, y=0.55cm, thick, >=Stealth, font=\small]
     \draw[->] (-6.4,0) -- (6.7,0) node[right] {$v_i\,(\mathrm{V})$};
@@ -2469,6 +2640,7 @@
 \end{tikzpicture}
 \end{center}
 \yr{Slide}
+
 
     
 \item Assuming that the diodes are ideal, find the output voltage $V_o$ for the circuit given. Draw the wave shape clearly.
@@ -2600,6 +2772,13 @@
 \label{sub:s3-early}
 
 \begin{enumerate}
+
+\item For a particular n-p-n transistor operating at a $V_{BE}=0.67\,\text{V}$ and $I_C=3\,\text{mA}$, the $i_C - v_{CE}$ curve has a slope of $3\times10^{-5}\,\text{S}$.\\
+(i) To what value of output resistance does this correspond?\\
+(ii) What is the value of the Early voltage of this transistor?\\
+(iii) For operation at 30\,mA, what would the output resistance become?
+\mk{10} \yr{EEE 263 | L-2/T-1 | 2023--24}
+
     
 \item What is the Early-effect in a BJT? Draw the $I$--$V$ curve of a practical BJT showing the Early effect.
 \mk{10} \yr{EEE 263 | L-2/T-1 | 2023--24}
@@ -2620,6 +2799,103 @@
 \label{sub:s3-dc}
 
 \begin{enumerate}
+
+
+\item For the circuit shown, the emitter voltage was measured to be $V_E=+1.7\,\text{V}$. Assume $|V_{BE}|=0.7\,\text{V}$. Find the values of the labeled node voltages and branch currents. What are the values of $\alpha$ and $\beta$ for the pnp transistor?
+\begin{center}
+        \begin{circuitikz}[thick, scale=1.2]
+        
+        % PNP Transistor
+        \node[pnp] (Q) at (2,2) {};
+        
+        % Base Section
+        \draw (Q.B) -- (0.5,2) node[circ] (B_node) {};
+        \draw (B_node) -- (-0.2,2) node[ocirc] {} node[left] {$V_B$};
+        \draw (0.5,2) to[R, l=$100\text{ k}\Omega$] (0.5,0.2) node[ground] {};
+        
+        % Emitter Section (Top)
+        \draw (Q.E) -- (2,3) node[circ] (E_node) {};
+        \draw (E_node) -- (2.8,3) node[ocirc] {} node[right] {$V_E$};
+        \draw (E_node) to[R, l=$5\text{ k}\Omega$] (2,4.4);
+        \draw[->] (2,4.4) -- (2,4.9) node[above] {$+10\text{ V}$};
+        
+        % Collector Section (Bottom)
+        \draw (Q.C) -- (2,1) node[circ] (C_node) {};
+        \draw (C_node) -- (2.8,1) node[ocirc] {} node[right] {$V_C$};
+        \draw (C_node) to[R, l=$5\text{ k}\Omega$] (2,-0.4);
+        \draw[->] (2,-0.4) -- (2,-0.9) node[below] {$-10\text{ V}$};
+        
+    \end{circuitikz}
+\end{center}
+\mk{15} \yr{EEE 263 | L-2/T-1 | 2024--25}
+
+
+\item For the circuit shown, find the values of the labeled node voltages and branch currents. Assume $\beta$ to be very high and $|V_{BE}|=0.7\,\text{V}$. What will happen if $\beta$ is reduced to a value of 100?
+\begin{center}
+        \begin{circuitikz}[american, thick, y=1.6cm]
+        
+        % Transistor (with circle)
+        \draw (0,0) node[npn, tr circle] (Q) {};
+        
+        % Base Connection (V3 and 22k ohm resistor)
+        \draw (Q.B) -- (-1.5, 0) coordinate(b_junct);
+        \draw (-4, 0) node[ground] {} to[R, l=$22\text{ k}\Omega$] (b_junct);
+        \draw (b_junct) to[short, *-o] (-1.5, 1) node[above] {V3};
+        
+        % Collector Connection (V1 and 1.6k ohm resistor)
+        \draw (Q.C) -- (0, 0.5) coordinate(c_junct);
+        \draw (c_junct) to[R, l=$1.6\text{ k}\Omega$] (0, 2.5) coordinate(vcc);
+        \draw (c_junct) to[short, *-o] (1.5, 0.5) node[right] {V1};
+        
+        % +5V Power Terminal (Hollow Triangle pointing up)
+        \draw (vcc) -- (-0.2, 2.5) -- (0, 2.8) -- (0.2, 2.5) -- cycle;
+        \node[left] at (-0.1, 2.7) {$+5\text{V}$}; 
+        
+        % Emitter Connection (V2 and 2.2k ohm resistor)
+        \draw (Q.E) -- (0, -0.5) coordinate(e_junct);
+        \draw (e_junct) to[R, l_=$2.2\text{ k}\Omega$] (0, -2.5) coordinate(vee);
+        \draw (e_junct) to[short, *-o] (1.5, -0.5) node[right] {V2};
+        
+        % -5V Power Terminal (Hollow Triangle pointing down)
+        \draw (vee) -- (-0.2, -2.5) -- (0, -2.8) -- (0.2, -2.5) -- cycle;
+        \node[left] at (-0.1, -2.7) {$-5\text{V}$}; 
+        
+    \end{circuitikz}
+\end{center}
+\mk{15} \yr{EEE 263 | L-2/T-1 | 2023--24}
+
+
+\item For the circuit shown, find $V_B$, $V_E$, and $V_C$ for $R_B=10\,\text{k}\Omega$. Let $\beta=100$.
+\begin{center}
+     \begin{circuitikz}[american, thick]
+        
+        % Place the NPN Transistor at the center
+        \node[npn] (Q) at (2,2) {};
+        
+        % Base Connection & RB Resistor
+        \draw (Q.B) -- (0.5,2) node[below] {$V_B$};
+        \draw (0.5,2) to[R, l=$R_B$] (0.5,4.2) -- (0.5,4.5);
+        \draw[->] (0.5,4.5) -- (0.5,4.8);
+        
+        % Collector Connection & RC Resistor
+        \draw (Q.C) -- (2,2.6) node[right] {$V_C$};
+        \draw (2,2.6) to[R, l_=$1~\text{k}\Omega$] (2,4.2) -- (2,4.5);
+        \draw[->] (2,4.5) -- (2,4.8);
+        
+        % +5V Label centered between the two supply arrows
+        \node[above] at (1.25,4.8) {$+5~\text{V}$};
+        
+        % Emitter Connection & RE Resistor
+        \draw (Q.E) -- (2,1.4) node[right] {$V_E$};
+        \draw (2,1.4) to[R, l=$1~\text{k}\Omega$] (2,-0.2) ;
+        
+        % Ground connection at the bottom
+        \draw (2,-0.2) -- (2,-0.4) node[ground]{};
+        
+    \end{circuitikz}
+\end{center}
+\mk{16} \yr{EEE 263 | L-2/T-1 | 2021--22}
+
     
 \item For the circuit shown, find the voltages at all nodes and the currents through all branches. Assume $\beta=100$.
 \begin{center}
@@ -2659,7 +2935,7 @@
 \mk{20} \yr{EEE 263 | L-2/T-1 | 2020--21}
 
 
-\item Calculate the collector current, emitter current and base current for the circuit shown in Figure . Also verify the operating mode of the transistor. Assume $\beta = 100$. (16)
+\item Calculate the collector current, emitter current and base current for the circuit shown in Figure . Also verify the operating mode of the transistor. Assume $\beta = 100$.
 
 \begin{center}
             \begin{circuitikz}[thick, american, scale=1.2]
@@ -2949,68 +3225,6 @@
 
 \begin{enumerate}
     
-\item For the circuit shown, the emitter voltage was measured to be $V_E=+1.7\,\text{V}$. Assume $|V_{BE}|=0.7\,\text{V}$. Find the values of the labeled node voltages and branch currents. What are the values of $\alpha$ and $\beta$ for the pnp transistor?
-\begin{center}
-        \begin{circuitikz}[thick, scale=1.2]
-        
-        % PNP Transistor
-        \node[pnp] (Q) at (2,2) {};
-        
-        % Base Section
-        \draw (Q.B) -- (0.5,2) node[circ] (B_node) {};
-        \draw (B_node) -- (-0.2,2) node[ocirc] {} node[left] {$V_B$};
-        \draw (0.5,2) to[R, l=$100\text{ k}\Omega$] (0.5,0.2) node[ground] {};
-        
-        % Emitter Section (Top)
-        \draw (Q.E) -- (2,3) node[circ] (E_node) {};
-        \draw (E_node) -- (2.8,3) node[ocirc] {} node[right] {$V_E$};
-        \draw (E_node) to[R, l=$5\text{ k}\Omega$] (2,4.4);
-        \draw[->] (2,4.4) -- (2,4.9) node[above] {$+10\text{ V}$};
-        
-        % Collector Section (Bottom)
-        \draw (Q.C) -- (2,1) node[circ] (C_node) {};
-        \draw (C_node) -- (2.8,1) node[ocirc] {} node[right] {$V_C$};
-        \draw (C_node) to[R, l=$5\text{ k}\Omega$] (2,-0.4);
-        \draw[->] (2,-0.4) -- (2,-0.9) node[below] {$-10\text{ V}$};
-        
-    \end{circuitikz}
-\end{center}
-\mk{15} \yr{EEE 263 | L-2/T-1 | 2024--25}
-
-
-\item For the circuit shown, find the values of the labeled node voltages and branch currents. Assume $\beta$ to be very high and $|V_{BE}|=0.7\,\text{V}$. What will happen if $\beta$ is reduced to a value of 100?
-\begin{center}
-        \begin{circuitikz}[american, thick, y=1.6cm]
-        
-        % Transistor (with circle)
-        \draw (0,0) node[npn, tr circle] (Q) {};
-        
-        % Base Connection (V3 and 22k ohm resistor)
-        \draw (Q.B) -- (-1.5, 0) coordinate(b_junct);
-        \draw (-4, 0) node[ground] {} to[R, l=$22\text{ k}\Omega$] (b_junct);
-        \draw (b_junct) to[short, *-o] (-1.5, 1) node[above] {V3};
-        
-        % Collector Connection (V1 and 1.6k ohm resistor)
-        \draw (Q.C) -- (0, 0.5) coordinate(c_junct);
-        \draw (c_junct) to[R, l=$1.6\text{ k}\Omega$] (0, 2.5) coordinate(vcc);
-        \draw (c_junct) to[short, *-o] (1.5, 0.5) node[right] {V1};
-        
-        % +5V Power Terminal (Hollow Triangle pointing up)
-        \draw (vcc) -- (-0.2, 2.5) -- (0, 2.8) -- (0.2, 2.5) -- cycle;
-        \node[left] at (-0.1, 2.7) {$+5\text{V}$}; 
-        
-        % Emitter Connection (V2 and 2.2k ohm resistor)
-        \draw (Q.E) -- (0, -0.5) coordinate(e_junct);
-        \draw (e_junct) to[R, l_=$2.2\text{ k}\Omega$] (0, -2.5) coordinate(vee);
-        \draw (e_junct) to[short, *-o] (1.5, -0.5) node[right] {V2};
-        
-        % -5V Power Terminal (Hollow Triangle pointing down)
-        \draw (vee) -- (-0.2, -2.5) -- (0, -2.8) -- (0.2, -2.5) -- cycle;
-        \node[left] at (-0.1, -2.7) {$-5\text{V}$}; 
-        
-    \end{circuitikz}
-\end{center}
-\mk{15} \yr{EEE 263 | L-2/T-1 | 2023--24}
 
 
 \item For the circuit shown with $\beta=200$ for each transistor, determine: (i) $I_{E1}$, (ii) $I_{E2}$, (iii) $V_{C1}$, and (iv) $V_{C2}$.
@@ -3106,36 +3320,6 @@
 \mk{20} \yr{EEE 263 | L-2/T-1 | 2022--23}
 
 
-\item For the circuit shown, find $V_B$, $V_E$, and $V_C$ for $R_B=10\,\text{k}\Omega$. Let $\beta=100$.
-\begin{center}
-     \begin{circuitikz}[american, thick]
-        
-        % Place the NPN Transistor at the center
-        \node[npn] (Q) at (2,2) {};
-        
-        % Base Connection & RB Resistor
-        \draw (Q.B) -- (0.5,2) node[below] {$V_B$};
-        \draw (0.5,2) to[R, l=$R_B$] (0.5,4.2) -- (0.5,4.5);
-        \draw[->] (0.5,4.5) -- (0.5,4.8);
-        
-        % Collector Connection & RC Resistor
-        \draw (Q.C) -- (2,2.6) node[right] {$V_C$};
-        \draw (2,2.6) to[R, l_=$1~\text{k}\Omega$] (2,4.2) -- (2,4.5);
-        \draw[->] (2,4.5) -- (2,4.8);
-        
-        % +5V Label centered between the two supply arrows
-        \node[above] at (1.25,4.8) {$+5~\text{V}$};
-        
-        % Emitter Connection & RE Resistor
-        \draw (Q.E) -- (2,1.4) node[right] {$V_E$};
-        \draw (2,1.4) to[R, l=$1~\text{k}\Omega$] (2,-0.2) ;
-        
-        % Ground connection at the bottom
-        \draw (2,-0.2) -- (2,-0.4) node[ground]{};
-        
-    \end{circuitikz}
-\end{center}
-\mk{16} \yr{EEE 263 | L-2/T-1 | 2021--22}
 
 
 \item Determine the currents $I_{C1}$ and $I_{C2}$ for the multi-BJT circuit shown.
@@ -3260,6 +3444,71 @@
     \end{circuitikz}
 \end{center}
 \mk{15} \yr{EEE 263 | L-2/T-1 | 2016--17}
+
+
+
+\begin{enumerate}
+
+\item The input-output characteristics of a BJT circuit are given. What will happen (i) if $V_{cc}$ is increased, (ii) if $R_c$ is increased? Explain with the characteristic curve.
+\begin{center}
+      % ==========================================
+    % প্রথম অংশ: Common Emitter Amplifier Circuit
+    % ==========================================
+  
+        \begin{circuitikz}[thick,scale=1.2, transform shape]
+            % Transistor
+            \node[npn] (Q) at (0,0) {};
+            
+            % Emitter Ground
+            \draw (Q.E) -- ++(0, -0.2) node[ground]{};
+            
+            % Base and AC Voltage Source (Vin)
+            \draw (Q.B) -- ++(-0.5,0) coordinate (B_node) 
+                to[sV, l_={$V_{in}$}] ++(0,-1.5) node[ground]{};
+            
+            % Collector, Rc and Vcc
+            \draw (Q.C) to[R, l_={$R_C$}, *-] ++(0,1.5) coordinate (Vc);
+            \draw[->, >=stealth] (Vc) -- ++(0,0.5) node[above] {$V_{CC}$};
+            
+            % Output Terminal (Vo)
+            \draw (Q.C) to[short, -o] ++(1,0) node[right] {$V_o$};
+        \end{circuitikz}
+  
+    % ==========================================
+    % দ্বিতীয় অংশ: Voltage Transfer Characteristics Curve
+ 
+        \begin{tikzpicture}[thick,scale=1.2, transform shape]
+            
+            % Axes
+            \draw[->, >=stealth, thick] (0,0) -- (4.5, 0) node[below] {$V_{in}$ (volt)};
+            \draw[->, >=stealth, thick] (0,0) -- (0, 3.5) node[above] {$V_o$ (volt)};
+            
+            % Origin Label
+            \node[below left] at (0,0) {0};
+            
+            % Vcc Dot and Label on Y-axis
+            \fill (0, 2.8) circle (1.5pt);
+            \node[left] at (0, 2.8) {$V_{CC}$};
+            
+            % VTC Curve (Cut-off -> Active -> Saturation)
+            \draw[thick] (0, 2.8) 
+                -- (1.5, 2.8) % Cut-off region (flat)
+                .. controls (1.8, 2.8) and (2.0, 2.5) .. (2.2, 2.1) % Curve bending
+                -- (3.0, 0.7) % Active region (linear drop)
+                .. controls (3.2, 0.3) and (3.4, 0.2) .. (3.6, 0.2) % Curve leveling off
+                -- (4.0, 0.2); % Saturation region (flat)
+            
+            % Dashed Lines for coordinates (0.5 and 0.2)
+            \draw[dashed] (1.5, 2.8) -- (1.5, 0) node[below] {0.5};
+            \draw[dashed] (3.4, 0.2) -- (0, 0.2) node[left] {0.2};
+            
+        \end{tikzpicture}
+\end{center}
+\mk{10} \yr{EEE 263 | L-2/T-1 | 2014--15}
+
+
+\end{enumerate}
+
 
 \end{enumerate}
 
@@ -3610,80 +3859,109 @@
 
 \begin{enumerate}
     
-\item 
+% ===== BJT inverter figure macros =====
+% Dual-axis transfer plot.  #1 Vcc [V], #2 Vin at saturation edge [V], #3 Ic,sat label [mA],
+% #4 show Ic curve (1/0), #5 show region names (1/0)
+\newcommand{\vtcplot}[5]{%
+\pgfmathsetmacro{\ys}{4.2/#1}%
+\pgfmathsetmacro{\vs}{#2}%
+\pgfmathsetmacro{\vtop}{#1-0.2}%
+\begin{tikzpicture}[font=\small, >=Stealth, x=8cm, y={\ys cm}, line cap=round]
+  % guides
+  \draw[gray!60, dashed] (0.5,0) -- (0.5,#1);
+  \draw[gray!60, dashed] (\vs,0) -- (\vs,#1);
+  \draw[gray!60, dashed] (0,0.2) -- (\vs,0.2);
+  % axes
+  \draw[->, blue!80!black, line width=0.9pt] (0,0) -- (0,#1*1.12) node[above]{$V_o\ (\mathrm{V})$};
+  \draw[->, line width=0.9pt] (0,0) -- (1.02,0);
+  \node[font=\small] at (0.75,0) [below, yshift=-15pt] {$V_{in}\ (\mathrm{V})$};
+  \ifnum#4=1
+    \draw[->, red!75!black, line width=0.9pt] (1.2,0) -- (1.2,#1*1.12) node[above]{$I_c\ (\mathrm{mA})$};
+  \fi
+  % ticks on x
+  \draw (0.5,0.07) -- (0.5,-0.07) node[below]{$0.5$};
+  \draw (\vs,0.07) -- (\vs,-0.07) node[below]{$#2$};
+  \draw (1,0.07) -- (1,-0.07) node[below]{$1.0$};
+  % ticks on V_o axis
+  \draw[blue!80!black] (-0.012,#1) -- (0.012,#1) node[left, xshift=-2pt]{$#1$};
+  \draw[blue!80!black] (-0.012,0.2) -- (0.012,0.2) node[left, xshift=-2pt]{$0.2$};
+  % V_o curve
+  \draw[blue!80!black, line width=1.5pt] (0,#1) -- (0.5,#1) -- (\vs,0.2) -- (1,0.2);
+  \fill[blue!80!black] (0.5,#1) circle (2pt) (\vs,0.2) circle (2pt);
+  \node[blue!80!black, font=\footnotesize, above right, inner sep=2pt] at (0.5,#1) {$(0.5,\,#1\,\mathrm{V})$};
+  \node[blue!80!black, font=\footnotesize, above right, inner sep=3pt] at (\vs,0.2) {$(#2,\,0.2\,\mathrm{V})$};
+  \ifnum#4=1
+    \draw[red!75!black, line width=1.5pt, dash pattern=on 5pt off 3pt] (0,0) -- (0.5,0) -- (\vs,\vtop) -- (1,\vtop);
+    \fill[red!75!black] (0.5,0) circle (2pt) (\vs,\vtop) circle (2pt);
+    \draw[red!75!black] (1.188,0) -- (1.212,0) node[right, xshift=1pt]{$0$};
+    \draw[red!75!black] (1.188,\vtop) -- (1.212,\vtop) node[right, xshift=1pt]{$#3$};
+    \draw[red!75!black, dashed] (\vs,\vtop) -- (1.2,\vtop);
+    \node[red!75!black, font=\footnotesize, above left, inner sep=3pt] at (0.5,0) {$(0.5,\,0\,\mathrm{mA})$};
+    \node[red!75!black, font=\footnotesize, above right, inner sep=3pt] at (\vs,\vtop) {$(#2,\,#3\,\mathrm{mA})$};
+  \fi
+  \ifnum#5=1
+    \node[gray!50!black, font=\footnotesize] at (0.25,#1*0.5) {cut-off};
+    \node[gray!50!black, font=\footnotesize] at ({(0.5+\vs)/2},#1*0.93) {active};
+    \node[gray!50!black, font=\footnotesize] at (0.88,#1*0.5) {saturation};
+  \fi
+\end{tikzpicture}}
+
+% inverter circuit
+\newcommand{\invckt}{%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, scale=1.1, transform shape, line cap=round]
+  \node[npn] (Q) at (0,0) {};
+  \draw (Q.E) -- ++(0,-0.4) node[ground]{};
+  \draw (Q.C) to[R, l={$R_C\!=\!480\,\Omega$}, name=rc] ++(0,2.2) coordinate (top);
+  \draw (top) -- ++(0,0.3) node[vcc]{$V_{CC}$};
+  \draw (Q.C) to[short, *-o] ++(1.2,0) node[right]{$V_o$};
+  \draw (Q.B) -- ++(-1.3,0) coordinate (vb);
+  \draw (vb) to[battery1, l_=$V_{in}$] ++(0,-1.5) node[ground]{};
+\end{circuitikz}}
+
+% three supply voltages on one pair of graphs
+\newcommand{\vtcsummary}{%
+\begin{tikzpicture}[font=\small, >=Stealth, line cap=round]
+  % left panel: V_o
+  \begin{scope}[x=5.4cm, y=0.4cm]
+    \draw[->] (0,0) -- (0,11.6) node[above]{$V_o\ (\mathrm{V})$};
+    \draw[->] (0,0) -- (1.1,0) node[right]{$V_{in}\ (\mathrm{V})$};
+    \foreach \x in {0.5,0.596,0.7,0.908}{\draw[gray!50, dotted] (\x,0) -- (\x,10.4);}
+    \foreach \x/\t in {0.5/0.5, 0.7/0.7}{\draw (\x,0.15) -- (\x,-0.15) node[below]{$\t$};}
+    \draw (0.596,0.15) -- (0.596,-0.15) node[below, yshift=-9pt, font=\footnotesize]{$0.596$};
+    \draw (0.908,0.15) -- (0.908,-0.15) node[below, font=\footnotesize]{$0.908$};
+    \foreach \y in {2.5,5,10}{\draw (0.01,\y) -- (-0.01,\y) node[left]{$\y$};}
+    \draw[green!45!black, line width=1.4pt] (0,2.5) -- (0.5,2.5) -- (0.596,0.2) -- (1,0.2);
+    \draw[blue!80!black, line width=1.4pt] (0,5) -- (0.5,5) -- (0.7,0.2) -- (1,0.2);
+    \draw[red!75!black, line width=1.4pt] (0,10) -- (0.5,10) -- (0.908,0.2) -- (1,0.2);
+    \node[green!45!black, font=\footnotesize, anchor=south west] at (0.02,2.55) {$V_{CC}=2.5$};
+    \node[blue!80!black, font=\footnotesize, anchor=south west] at (0.02,5.05) {$V_{CC}=5$};
+    \node[red!75!black, font=\footnotesize, anchor=south west] at (0.02,10.05) {$V_{CC}=10$};
+  \end{scope}
+  % right panel: I_c
+  \begin{scope}[shift={(8.2,0)}, x=5.4cm, y=0.19cm]
+    \draw[->] (0,0) -- (0,22.6) node[above]{$I_c\ (\mathrm{mA})$};
+    \draw[->] (0,0) -- (1.1,0) node[right]{$V_{in}\ (\mathrm{V})$};
+    \foreach \x in {0.5,0.596,0.7,0.908}{\draw[gray!50, dotted] (\x,0) -- (\x,21);}
+    \foreach \x/\t in {0.5/0.5, 0.7/0.7}{\draw (\x,0.3) -- (\x,-0.3) node[below]{$\t$};}
+    \draw (0.596,0.3) -- (0.596,-0.3) node[below, yshift=-9pt, font=\footnotesize]{$0.596$};
+    \draw (0.908,0.3) -- (0.908,-0.3) node[below, font=\footnotesize]{$0.908$};
+    \foreach \y/\t in {4.79/4.79, 10/10, 20.4/20.4}{\draw (0.01,\y) -- (-0.01,\y) node[left]{$\t$};}
+    \draw[green!45!black, line width=1.4pt] (0,0) -- (0.5,0) -- (0.596,4.79) -- (1,4.79);
+    \draw[blue!80!black, line width=1.4pt] (0,0) -- (0.5,0) -- (0.7,10) -- (1,10);
+    \draw[red!75!black, line width=1.4pt] (0,0) -- (0.5,0) -- (0.908,20.4) -- (1,20.4);
+    \node[green!45!black, font=\footnotesize, anchor=south east] at (1,4.9) {$V_{CC}=2.5$};
+    \node[blue!80!black, font=\footnotesize, anchor=south east] at (1,10.1) {$V_{CC}=5$};
+    \node[red!75!black, font=\footnotesize, anchor=south east] at (1,20.5) {$V_{CC}=10$};
+  \end{scope}
+\end{tikzpicture}}
+
+\item
 \begin{enumerate}
 \item Modify both the $V_o$--$V_{in}$ and $I_c$--$V_{in}$ graphs if supply voltage is decreased from 5\,V to 2.5\,V ($R_c \approx 480\,\Omega$).
 \mk{10} \yr{EEE 263 | L-2/T-1 | 2013--14}
 
 \begin{center}
-      \begin{circuitikz}[thick,scale=1.2, transform shape]
-
-        % ===================================================
-        % NPN Transistor
-        % ===================================================
-        \node[npn] (Q) at (0,0) {};
-
-        % ===================================================
-        % Emitter Connection (Ground)
-        % ===================================================
-        \draw (Q.E) -- ++(0, -0.5) node[ground] {};
-
-        % ===================================================
-        % Collector Connection (Rc, 5V, Output V0)
-        % ===================================================
-        % Output Node V0
-        \draw (Q.C) to[short, -o] ++(1, 0) node[below] {$V_0$};
-        
-        % Resistor Rc and +5V supply
-        % FIX: Added {...} around the label so the '=' sign doesn't break the code
-        \draw (Q.C) to[R, l_={$R_C=480\,\Omega$}] ++(0, 2) coordinate (VCC);
-        
-        % Upward arrow for 5V supply
-        \draw[->, >=stealth] (VCC) -- ++(0, 0.6) node[right] {$5\text{V}$};
-
-        % ===================================================
-        % Base Connection (Vin and Ground)
-        % ===================================================
-        % Wire from base to the left
-        \draw (Q.B) -- ++(-1.5, 0) coordinate (VB);
-        
-        % DC Voltage source (battery) and ground
-        % FIX: Added {...} around the label here as well for safety
-        \draw (VB) to[battery1, l={$V_{\text{in}}$}] ++(0, -1.5) node[ground] {};
-
-    \end{circuitikz}
-        \begin{tikzpicture}[thick,scale=1.2]
-
-        % ===================================================
-        % Axes
-        % ===================================================
-        % Y-axis (V0)
-        \draw[->, thick] (0, -0.5) -- (0, 5.5) node[left] {$V_0$};
-        % X-axis (Vin)
-        \draw[->, thick] (-0.5, 0) -- (6.5, 0) node[below] {$V_{\text{in}}$};
-
-        % ===================================================
-        % Piecewise Linear Curve
-        % ===================================================
-        % The path goes from x=0 -> x=2.5 -> x=4 -> x=5.5
-        \draw[very thick] (0, 4) 
-            -- (2.5, 4) coordinate (P1) 
-            -- (4, 0.5) coordinate (P2) 
-            -- (5.5, 0.5);
-
-        % ===================================================
-        % Highlight Circles at the corner points
-        % ===================================================
-        \draw[thick] (P1) circle (4pt);
-        \draw[thick] (P2) circle (4pt);
-
-        % ===================================================
-        % Text Labels for the points
-        % ===================================================
-        \node[above right, xshift=2pt] at (P1) {$(0.5\text{v}, 5\text{v})$};
-        \node[above right, xshift=2pt] at (P2) {$(0.7\text{v}, 0.2\text{v})$};
-
-    \end{tikzpicture}
+    \invckt\hspace{1cm}\scalebox{0.7}{\vtcplot{5}{0.7}{10}{0}{0}}
 \end{center}
 
 \item The figure shows an inverter gate built by an npn BJT and its $V_o$--$V_{in}$ characteristics. Copy the $V_o$--$V_{in}$ graph to your answer script exactly to scale and then draw the collector current ($I_c$) vs.\ $V_{in}$ over the same graph. Mention the co-ordinates of the bending points of the $I_c$--$V_{in}$ graph as shown for $V_o$--$V_{in}$.
@@ -3773,6 +4051,21 @@
 \end{circuitikz}
 \end{center}
 \mk{20} \yr{EEE 263 | L-2/T-1 | 2024--25}
+
+
+
+\item The small-signal voltage gain $A_v$ of a BJT CE amplifier is $-I_C R_C / V_T$ without the Early effect. Show that if the Early effect is considered using $i_C = I_S e^{v_{BE}/V_T}(1 + v_{CE}/V_A)$, the gain becomes $A_v = -\frac{I_C R_C / V_T}{1 + I_C R_C/(V_A + V_{CE})} = -\frac{(V_{CC}-V_{CE})/V_T}{1 + (V_{CC}-V_{CE})/(V_A+V_{CE})}$. For $V_{CC}=5\,\text{V}$, $V_{CE}=2.5\,\text{V}$, $V_A=100\,\text{V}$, calculate the gain with and without the Early effect.
+\mk{20} \yr{EEE 263 | L-2/T-1 | 2024--25}
+
+
+
+
+\item Derive the expression of $R_i$, $R_o$, $A_v$, and $G_v$ for a common-emitter amplifier with emitter resistance $R_e$ using the T model.
+\mk{26} \yr{EEE 263 | L-2/T-1 | 2021--22}
+
+
+\item For a BJT common-emitter amplifier with resistance in the emitter, derive the expressions for input impedance, output impedance, voltage gain, and current gain. What are the advantages and disadvantages of adding resistance in the emitter?
+\mk{30} \yr{EEE 263 | L-2/T-1 | Jan--2021}
 
 
 \item Determine the voltage gain $v_0/v_i$ of the transistor amplifier shown in the figure. Assume $\beta=100$.
@@ -3937,60 +4230,40 @@
 \mk{36} \yr{EEE 263 | L-2/T-1 | 2016--17}
 
 
-\item For the circuit shown, determine $R_{in}$, $R_{out}$, $V_o/V_i$, and $i_o/i_i$. The BJT is biased with $I=5\,\text{mA}$ and has $\beta=100$ and $V_A=100\,\text{V}$.
+
+\item For the circuit shown, calculate (i) DC bias points, (ii) small-signal voltage gain, (iii) maximum allowable input AC voltage.
 \begin{center}
- 
-  \begin{circuitikz}[thick,scale=1.2, transform shape]
+      \begin{circuitikz}[thick,scale=1.2, transform shape]
         
-        % ===================================================
-        % Emitter Follower (Common Collector) Amplifier
-        % ===================================================
+        % 1. NPN Transistor
+        \draw (0,0) node[npn, anchor=B] (Q) {};
         
-        % ১. Transistor (NPN)
-        \node[npn] (Q) at (0, 0) {};
+        % 2. Base side: R_BB, AC Source (v_in) and DC Source (V_BB)
+        \draw (Q.B) to[R, l_={$R_{BB}=100\mathrm{K}\Omega$}] ++(-3.5,0) coordinate (base_in);
         
-        % ২. Collector & Vcc Path
-        \draw (Q.C) -- ++(0, 0.5) coordinate (Vcc);
-        \draw[->, >=stealth] (Vcc) -- ++(0, 0.5) node[right] {$V_{CC}$};
+        \draw (base_in) to[sV, l=$v_{in}$] ++(0,-1.8) coordinate (dc_in);
+        % Manually adding + and - signs to match the hand-drawn figure
+        \node at (-3.1, -0.4) {$+$};
+        \node at (-3.1, -1.4) {$-$};
         
-        % ৩. Emitter Current Source & -Vee Path
-        \draw (Q.E) -- ++(0, -0.5) coordinate (E_node);
-        \draw (E_node) to[I, l={$I=5\mathrm{mA}$}] ++(0, -1.8) coordinate (Vee);
-        \draw[->, >=stealth] (Vee) -- ++(0, -0.5) node[right] {$-V_{EE}$};
+        \draw (dc_in) to[battery1, l={$V_{BB}=3\mathrm{V}$}] ++(0,-1.5) node[ground] {};
         
-        % ৪. Input Side (Left)
-        \draw (Q.B) ++(-2, 0) coordinate (vi_node) to[C, l=$\infty$] (Q.B);
-        \node[ocirc] at (vi_node) {};
-        \node[below] at (vi_node) {$+v_i$};
+        % 3. Emitter side: Ground
+        \draw (Q.E) -- ++(0,-0.5) node[ground] {};
         
-        \draw (vi_node) ++(-2.5, 0) coordinate (Vs_top);
-        \draw (Vs_top) to[R, l_={$R_s=10\mathrm{K}\Omega$}, i^>={$i_i$}] (vi_node);
-        \draw (Vs_top) to[V, l_=$V_s$] ++(0, -2.5) node[ground]{};
+        % 4. Collector side: R_C, V_CC and Output V_o
+        \draw (Q.C) -- ++(0,0.5) coordinate (coll_node);
+        \draw (coll_node) to[short, -o] ++(1.5,0) node[right] {$V_o$};
+        \draw (coll_node) to[R, l_={$R_C=3\mathrm{K}\Omega$}] ++(0,2) node[vcc] {$V_{CC}=+10\mathrm{V}$};
         
-        % Rin Arrow
-        \draw[->, >=stealth] ([shift={(-0.4, -0.8)}]vi_node) node[below] {$R_{in}$} -- ++(0.8, 0);
-        
-        % ৫. Output Side (Right)
-        \draw (Q.E) to[short, *-] ++(0.5, 0) coordinate (E_branch);
-        \draw (E_branch) to[C, l=$\infty$] ++(2, 0) coordinate (vo_node);
-        \node[circ] at (vo_node) {}; % এখানে জাংশন বোঝাতে circ (ডট) দেওয়া হয়েছে
-        
-        % Load Resistor RL
-        \draw (vo_node) to[R, l={$R_L=1\mathrm{K}\Omega$}, i^>={$i_o$}] ++(0, -2.5) node[ground]{};
-        
-        % vo terminal and Output current io
-        % ওভারল্যাপ এড়াতে i_o কে ডানদিকের লাইনে আরেকটু সরিয়ে (i^> ব্যবহার করে) দেওয়া হয়েছে
-        \draw (vo_node) -- ++(0.5, 0) coordinate (io_start);
-        \draw (io_start) to[short] ++(1.5, 0) node[ocirc]{} node[right] {$V_o$};
-        
-        % Rout Arrow
-        % Rout অ্যারোটিকে RL এর বাঁ-পাশে সরিয়ে দেওয়া হয়েছে যেন কোনো ওভারল্যাপ না হয়
-        \draw[->, >=stealth] ([shift={(-0.57, -0.6)}]vo_node) node[below] {$R_{out}$} -- ++(-0.8, 0);
+        % 5. Annotations: Beta value and Figure text
+        \node at (2, -0.5) {\Large $\beta = 100$};
         
     \end{circuitikz}
 \end{center}
+\mk{26} \yr{EEE 263 | L-2/T-1 | 2015--16}
 
-\mk{20} \yr{EEE 263 | L-2/T-1 | 2014--15}
+
 
 
 \item Draw the small signal circuit diagram of the CE circuit shown. Why is the circuit called a ``Small Signal'' circuit? Determine the values of input resistance $R_{in}$, output resistance $R_{out}$, and voltage gain $A_v$. If $v_{sig} \approx 2\,\text{mV}$, find the value of $V_{out}$.
@@ -4241,7 +4514,12 @@
 
 \begin{enumerate}
 
-\item For the bootstrapped follower circuit shown: (i) Find the DC emitter current and $g_m$, $r_e$, $r_\pi$. Assume $\beta=100$. (ii) Replace the BJT with its T model (neglecting $r_o$) and determine $R_{in}$ and the voltage gain $v_o/v_{sig}$. (iii) Repeat (ii) for the case when capacitor $C_B$ is open-circuited. Compare the results with (ii) and comment on the advantage of bootstrapping.
+\item For the bootstrapped follower circuit shown: 
+\begin{enumerate}
+    \item Find the DC emitter current and $g_m$, $r_e$, $r_\pi$. Assume $\beta=100$.
+    \item Replace the BJT with its T model (neglecting $r_o$) and determine $R_{in}$ and the voltage gain $v_o/v_{sig}$.
+    \item Repeat (b) for the case when capacitor $C_B$ is open-circuited. Compare the results with (b) and comment on the advantage of bootstrapping.
+\end{enumerate}
 \begin{center}
     
 \begin{circuitikz}[american, line width=0.8pt, y=1.3cm, x=1.5cm]
@@ -4358,16 +4636,57 @@
 \mk{23.67} \yr{EEE 263 | L-2/T-1 | 2018--19}
 
 
-\item The small-signal voltage gain $A_v$ of a BJT CE amplifier is $-I_C R_C / V_T$ without the Early effect. Show that if the Early effect is considered using $i_C = I_S e^{v_{BE}/V_T}(1 + v_{CE}/V_A)$, the gain becomes $A_v = -\frac{I_C R_C / V_T}{1 + I_C R_C/(V_A + V_{CE})} = -\frac{(V_{CC}-V_{CE})/V_T}{1 + (V_{CC}-V_{CE})/(V_A+V_{CE})}$. For $V_{CC}=5\,\text{V}$, $V_{CE}=2.5\,\text{V}$, $V_A=100\,\text{V}$, calculate the gain with and without the Early effect.
-\mk{20} \yr{EEE 263 | L-2/T-1 | 2024--25}
 
+\item For the circuit shown, determine $R_{in}$, $R_{out}$, $V_o/V_i$, and $i_o/i_i$. The BJT is biased with $I=5\,\text{mA}$ and has $\beta=100$ and $V_A=100\,\text{V}$.
+\begin{center}
+ 
+  \begin{circuitikz}[thick,scale=1.2, transform shape]
+        
+        % ===================================================
+        % Emitter Follower (Common Collector) Amplifier
+        % ===================================================
+        
+        % ১. Transistor (NPN)
+        \node[npn] (Q) at (0, 0) {};
+        
+        % ২. Collector & Vcc Path
+        \draw (Q.C) -- ++(0, 0.5) coordinate (Vcc);
+        \draw[->, >=stealth] (Vcc) -- ++(0, 0.5) node[right] {$V_{CC}$};
+        
+        % ৩. Emitter Current Source & -Vee Path
+        \draw (Q.E) -- ++(0, -0.5) coordinate (E_node);
+        \draw (E_node) to[I, l={$I=5\mathrm{mA}$}] ++(0, -1.8) coordinate (Vee);
+        \draw[->, >=stealth] (Vee) -- ++(0, -0.5) node[right] {$-V_{EE}$};
+        
+        % ৪. Input Side (Left)
+        \draw (Q.B) ++(-2, 0) coordinate (vi_node) to[C, l=$\infty$] (Q.B);
+        \node[ocirc] at (vi_node) {};
+        \node[below] at (vi_node) {$+v_i$};
+        
+        \draw (vi_node) ++(-2.5, 0) coordinate (Vs_top);
+        \draw (Vs_top) to[R, l_={$R_s=10\mathrm{K}\Omega$}, i^>={$i_i$}] (vi_node);
+        \draw (Vs_top) to[V, l_=$V_s$] ++(0, -2.5) node[ground]{};
+        
+        % Rin Arrow
+        \draw[->, >=stealth] ([shift={(-0.4, -0.8)}]vi_node) node[below] {$R_{in}$} -- ++(0.8, 0);
+        
+        % ৫. Output Side (Right)
+        \draw (Q.E) to[short, *-] ++(0.5, 0) coordinate (E_branch);
+        \draw (E_branch) to[C, l=$\infty$] ++(2, 0) coordinate (vo_node);
+        \node[circ] at (vo_node) {}; 
+        \draw (vo_node) to[R, l={$R_L=1\mathrm{K}\Omega$}, i^>={$i_o$}] ++(0, -2.5) node[ground]{};
+        
 
-\item Derive the expression of $R_i$, $R_o$, $A_v$, and $G_v$ for a common-emitter amplifier with emitter resistance $R_e$ using the T model.
-\mk{26} \yr{EEE 263 | L-2/T-1 | 2021--22}
+        \draw (vo_node) -- ++(0.5, 0) coordinate (io_start);
+        \draw (io_start) to[short] ++(1.5, 0) node[ocirc]{} node[right] {$V_o$};
+        
+   
+        \draw[->, >=stealth] ([shift={(-0.57, -0.6)}]vo_node) node[below] {$R_{out}$} -- ++(-0.8, 0);
+        
+    \end{circuitikz}
+\end{center}
 
-
-\item For a BJT common-emitter amplifier with resistance in the emitter, derive the expressions for input impedance, output impedance, voltage gain, and current gain. What are the advantages and disadvantages of adding resistance in the emitter?
-\mk{30} \yr{EEE 263 | L-2/T-1 | Jan--2021}
+\mk{20} \yr{EEE 263 | L-2/T-1 | 2014--15}
 
 
 \end{enumerate}
@@ -4416,103 +4735,6 @@
 
 \end{enumerate}
 
-%%──────────────────────────────────────────────────────────────────────
-\subtopic{cC}{BJT Input-Output Characteristics}
-\label{sub:s4-io}
-
-\begin{enumerate}
-\item For the circuit shown, calculate (i) DC bias points, (ii) small-signal voltage gain, (iii) maximum allowable input AC voltage.
-\begin{center}
-      \begin{circuitikz}[thick,scale=1.2, transform shape]
-        
-        % 1. NPN Transistor
-        \draw (0,0) node[npn, anchor=B] (Q) {};
-        
-        % 2. Base side: R_BB, AC Source (v_in) and DC Source (V_BB)
-        \draw (Q.B) to[R, l_={$R_{BB}=100\mathrm{K}\Omega$}] ++(-3.5,0) coordinate (base_in);
-        
-        \draw (base_in) to[sV, l=$v_{in}$] ++(0,-1.8) coordinate (dc_in);
-        % Manually adding + and - signs to match the hand-drawn figure
-        \node at (-3.1, -0.4) {$+$};
-        \node at (-3.1, -1.4) {$-$};
-        
-        \draw (dc_in) to[battery1, l={$V_{BB}=3\mathrm{V}$}] ++(0,-1.5) node[ground] {};
-        
-        % 3. Emitter side: Ground
-        \draw (Q.E) -- ++(0,-0.5) node[ground] {};
-        
-        % 4. Collector side: R_C, V_CC and Output V_o
-        \draw (Q.C) -- ++(0,0.5) coordinate (coll_node);
-        \draw (coll_node) to[short, -o] ++(1.5,0) node[right] {$V_o$};
-        \draw (coll_node) to[R, l_={$R_C=3\mathrm{K}\Omega$}] ++(0,2) node[vcc] {$V_{CC}=+10\mathrm{V}$};
-        
-        % 5. Annotations: Beta value and Figure text
-        \node at (2, -0.5) {\Large $\beta = 100$};
-        
-    \end{circuitikz}
-\end{center}
-\mk{26} \yr{EEE 263 | L-2/T-1 | 2015--16}
-
-
-\item The input-output characteristics of a BJT circuit are given. What will happen (i) if $V_{cc}$ is increased, (ii) if $R_c$ is increased? Explain with the characteristic curve.
-\begin{center}
-      % ==========================================
-    % প্রথম অংশ: Common Emitter Amplifier Circuit
-    % ==========================================
-  
-        \begin{circuitikz}[thick,scale=1.2, transform shape]
-            % Transistor
-            \node[npn] (Q) at (0,0) {};
-            
-            % Emitter Ground
-            \draw (Q.E) -- ++(0, -0.2) node[ground]{};
-            
-            % Base and AC Voltage Source (Vin)
-            \draw (Q.B) -- ++(-0.5,0) coordinate (B_node) 
-                to[sV, l_={$V_{in}$}] ++(0,-1.5) node[ground]{};
-            
-            % Collector, Rc and Vcc
-            \draw (Q.C) to[R, l_={$R_C$}, *-] ++(0,1.5) coordinate (Vc);
-            \draw[->, >=stealth] (Vc) -- ++(0,0.5) node[above] {$V_{CC}$};
-            
-            % Output Terminal (Vo)
-            \draw (Q.C) to[short, -o] ++(1,0) node[right] {$V_o$};
-        \end{circuitikz}
-  
-    % ==========================================
-    % দ্বিতীয় অংশ: Voltage Transfer Characteristics Curve
- 
-        \begin{tikzpicture}[thick,scale=1.2, transform shape]
-            
-            % Axes
-            \draw[->, >=stealth, thick] (0,0) -- (4.5, 0) node[below] {$V_{in}$ (volt)};
-            \draw[->, >=stealth, thick] (0,0) -- (0, 3.5) node[above] {$V_o$ (volt)};
-            
-            % Origin Label
-            \node[below left] at (0,0) {0};
-            
-            % Vcc Dot and Label on Y-axis
-            \fill (0, 2.8) circle (1.5pt);
-            \node[left] at (0, 2.8) {$V_{CC}$};
-            
-            % VTC Curve (Cut-off -> Active -> Saturation)
-            \draw[thick] (0, 2.8) 
-                -- (1.5, 2.8) % Cut-off region (flat)
-                .. controls (1.8, 2.8) and (2.0, 2.5) .. (2.2, 2.1) % Curve bending
-                -- (3.0, 0.7) % Active region (linear drop)
-                .. controls (3.2, 0.3) and (3.4, 0.2) .. (3.6, 0.2) % Curve leveling off
-                -- (4.0, 0.2); % Saturation region (flat)
-            
-            % Dashed Lines for coordinates (0.5 and 0.2)
-            \draw[dashed] (1.5, 2.8) -- (1.5, 0) node[below] {0.5};
-            \draw[dashed] (3.4, 0.2) -- (0, 0.2) node[left] {0.2};
-            
-        \end{tikzpicture}
-\end{center}
-\mk{10} \yr{EEE 263 | L-2/T-1 | 2014--15}
-
-
-\end{enumerate}
 
 
 %% ══════════════════════════════════════════════════════════════════════
@@ -4852,6 +5074,77 @@
 \end{circuitikz}
 \end{center}
 \mk{20} \yr{EEE 263 | L-2/T-1 | 2018--19}
+
+
+
+\item For the circuit shown with transistor parameters $K_{n1}=500\,\mu\text{A/V}^2$, $K_{n2}=200\,\mu\text{A/V}^2$, $V_{T1}=V_{T2}=1.2\,\text{V}$, design the circuit such that $I_{D1}=0.1\,\text{mA}$, $I_{D2}=0.3\,\text{mA}$, $V_{DS1}=V_{DS2}=5\,\text{V}$.
+\begin{center}
+  
+    \begin{circuitikz}[thick,scale=1.2, transform shape]
+        \ctikzset{tripoles/mos style/arrows}
+
+        % ==========================================
+        % Top and Bottom Rails
+        % ==========================================
+        \draw (-2.5, 3) -- (3.5, 3);
+        \draw (-2.5, -3) -- (3.5, -3);
+
+        % Power supply arrows
+        \draw[-latex] (1.2, 3) -- (1.2, 3.8) node[right] {$+5V$};
+        \draw[-latex] (1.2, -3) -- (1.2, -3.8) node[right] {$-5V$};
+
+        % ==========================================
+        % Transistors (Both NMOS)
+        % ==========================================
+        \node[nmos] (M1) at (0, 0) {};
+        \node[right] at (M1.text) {$M_1$};
+        
+        \node[nmos] (M2) at (2.5, 0) {};
+        \node[right] at (M2.text) {$M_2$};
+
+        % ==========================================
+        % Left Voltage Divider (Gate of M1)
+        % ==========================================
+        \draw (M1.G) -- ++(-1.5, 0) coordinate (G1);
+        \node[circ] at (G1) {};
+        \draw (G1) to[R, l=$R_1$] (G1 |- 0, 3);
+        \draw (G1) to[R, l=$337\text{ k}\Omega$] (G1 |- 0, -3);
+        
+        % Nodes on the rails for the divider
+        \node[circ] at (G1 |- 0, 3) {};
+        \node[circ] at (G1 |- 0, -3) {};
+
+        % ==========================================
+        % M1 Drain and Source Branches
+        % ==========================================
+        % Drain branch
+        \draw (M1.D) -- ++(0, 0.5) coordinate (D1);
+        \node[circ] at (D1) {};
+        \draw (D1) to[R, l_=$R_{D1}$] (D1 |- 0, 3);
+        \node[circ] at (D1 |- 0, 3) {};
+        
+        % Source branch
+        \draw (M1.S) to[R, l_=$R_{S1}$] (M1.S |- 0, -3);
+        \node[circ] at (M1.S |- 0, -3) {};
+
+        % ==========================================
+        % M2 Gate, Drain, and Source Branches
+        % ==========================================
+        % Gate connection to M1 Drain
+        \draw (D1) -| (M2.G);
+
+        % Drain connection (Direct to +5V)
+        \draw (M2.D) -- (M2.D |- 0, 3);
+        \node[circ] at (M2.D |- 0, 3) {};
+        
+        % Source branch
+        \draw (M2.S) to[R, l_=$R_{S2}$] (M2.S |- 0, -3);
+        \node[circ] at (M2.S |- 0, -3) {};
+
+    \end{circuitikz}
+\end{center}
+
+\mk{20} \yr{EEE 263 | L-2/T-1 | 2016--17}
 
 
 \item For the circuit shown, for all MOSFETs $|V_t|=1\,\text{V}$, $\mu_n C_{ox}=50\,\mu\text{A/V}^2$, $L=1\,\mu\text{m}$, $W=10\,\mu\text{m}$. Find $V$ and $I$. If $Q_3$ and $Q_4$ are made to have $W=100\,\mu\text{m}$, find $V$ and $I$ in that case.
@@ -5207,83 +5500,6 @@
 
 \end{enumerate}
 
-%%──────────────────────────────────────────────────────────────────────
-\subtopic{cB}{Multi-stage MOSFET Circuit Design}
-\label{sub:s5-multistage}
-
-\begin{enumerate}
-
-\item For the circuit shown with transistor parameters $K_{n1}=500\,\mu\text{A/V}^2$, $K_{n2}=200\,\mu\text{A/V}^2$, $V_{T1}=V_{T2}=1.2\,\text{V}$, design the circuit such that $I_{D1}=0.1\,\text{mA}$, $I_{D2}=0.3\,\text{mA}$, $V_{DS1}=V_{DS2}=5\,\text{V}$.
-\begin{center}
-  
-    \begin{circuitikz}[thick,scale=1.2, transform shape]
-        \ctikzset{tripoles/mos style/arrows}
-
-        % ==========================================
-        % Top and Bottom Rails
-        % ==========================================
-        \draw (-2.5, 3) -- (3.5, 3);
-        \draw (-2.5, -3) -- (3.5, -3);
-
-        % Power supply arrows
-        \draw[-latex] (1.2, 3) -- (1.2, 3.8) node[right] {$+5V$};
-        \draw[-latex] (1.2, -3) -- (1.2, -3.8) node[right] {$-5V$};
-
-        % ==========================================
-        % Transistors (Both NMOS)
-        % ==========================================
-        \node[nmos] (M1) at (0, 0) {};
-        \node[right] at (M1.text) {$M_1$};
-        
-        \node[nmos] (M2) at (2.5, 0) {};
-        \node[right] at (M2.text) {$M_2$};
-
-        % ==========================================
-        % Left Voltage Divider (Gate of M1)
-        % ==========================================
-        \draw (M1.G) -- ++(-1.5, 0) coordinate (G1);
-        \node[circ] at (G1) {};
-        \draw (G1) to[R, l=$R_1$] (G1 |- 0, 3);
-        \draw (G1) to[R, l=$337\text{ k}\Omega$] (G1 |- 0, -3);
-        
-        % Nodes on the rails for the divider
-        \node[circ] at (G1 |- 0, 3) {};
-        \node[circ] at (G1 |- 0, -3) {};
-
-        % ==========================================
-        % M1 Drain and Source Branches
-        % ==========================================
-        % Drain branch
-        \draw (M1.D) -- ++(0, 0.5) coordinate (D1);
-        \node[circ] at (D1) {};
-        \draw (D1) to[R, l_=$R_{D1}$] (D1 |- 0, 3);
-        \node[circ] at (D1 |- 0, 3) {};
-        
-        % Source branch
-        \draw (M1.S) to[R, l_=$R_{S1}$] (M1.S |- 0, -3);
-        \node[circ] at (M1.S |- 0, -3) {};
-
-        % ==========================================
-        % M2 Gate, Drain, and Source Branches
-        % ==========================================
-        % Gate connection to M1 Drain
-        \draw (D1) -| (M2.G);
-
-        % Drain connection (Direct to +5V)
-        \draw (M2.D) -- (M2.D |- 0, 3);
-        \node[circ] at (M2.D |- 0, 3) {};
-        
-        % Source branch
-        \draw (M2.S) to[R, l_=$R_{S2}$] (M2.S |- 0, -3);
-        \node[circ] at (M2.S |- 0, -3) {};
-
-    \end{circuitikz}
-\end{center}
-
-\mk{20} \yr{EEE 263 | L-2/T-1 | 2016--17}
-
-
-\end{enumerate}
 
 %%──────────────────────────────────────────────────────────────────────
 \subtopic{cB}{MOSFET Transconductance}
@@ -5730,6 +5946,89 @@
 
 \begin{enumerate}
     
+% ===== common-source amplifier figure macros =====
+\providecolor{csRed}{HTML}{B03A2E}
+% DC/AC circuit.  #1 = 0 original circuit, 1 = modified circuit (source degeneration)
+\newcommand{\cscircuit}[1]{%
+\begin{circuitikz}[american, line width=0.8pt, y=1.4cm, font=\small, line cap=round]
+  \ctikzset{tripoles/mos style/arrows}
+  \node[nmos] (M) at (3,0) {};
+  % input path
+  \draw (-6.5,0) to[vsource, l=$v_{\text{sig}}$] (-6.5,-2.5) node[ground]{};
+  \draw (-6.5,0) to[R, l={$R_{\text{sig}}\!=\!200\text{ k}\Omega$}] (-3.5,0) to[short, -o] (-3.0,0);
+  \draw (-3.0,0) to[C, l={$C_1\!=\!\infty$}] (-1.0,0) to[short, -o] (-0.5,0);
+  \draw (-0.5,0) -- (1.5,0); \fill (1.5,0) circle (2pt); \draw (1.5,0) -- (M.G);
+  % gate bias divider
+  \draw (1.5,0) -- (1.5,0.4) to[R, l=$10\text{ M}\Omega$] (1.5,2.8);
+  \draw (1.5,0) -- (1.5,-0.4) to[R, l_=$5\text{ M}\Omega$] (1.5,-2.8) node[ground]{};
+  % drain path and supply
+  \fill (M.D) circle (2pt) node[left=4pt] {$V_D$};
+  \draw (3,2.8) to[R, l=$16\text{ k}\Omega$, i=$I_D$] (M.D);
+  \draw (1.5,2.8) -- (3,2.8);
+  \fill (2.25,2.8) circle (2pt);
+  \draw (2.25,2.8) -- (2.25,3.3) node[vcc]{$+15\text{ V}$};
+  % output section
+  \draw (M.D) -| (4.2,1.0) to[C, l={$C_2\!=\!\infty$}] (6.2,1.0);
+  \fill (6.2,1.0) circle (2pt);
+  \draw (6.2,1.0) to[R, l={$16\text{ k}\Omega$}] (6.2,-1.5) node[ground]{};
+  \draw (6.2,1.0) to[short, -o] (7.8,1.0) node[right]{$v_o$};
+  % source path
+  \draw (M.S) -- (3,-1.0); \fill (3,-1.0) circle (2pt);
+  \ifnum#1=0
+    \draw (3,-1.0) to[R, l_=$7\text{ k}\Omega$] (3,-3.5) node[ground]{};
+    \draw (3,-1.0) -- (4.8,-1.0) to[C, l={$C_3\!=\!\infty$}] (4.8,-3.5) node[ground]{};
+    \draw[->, >=stealth, line width=1.2pt] (0.2,-0.5) -- (1.0,-0.5);
+    \node[below] at (0.6,-0.5) {$R_{\text{in}}$};
+    \draw[<-, >=stealth, line width=1.2pt] (5.0,0.5) -- (5.8,0.5);
+    \node[below] at (5.4,0.5) {$R_o$};
+    \node[left=4pt] at (-0.5,0.5) {$v_{gs}$};
+  \else
+    \draw[csRed] (3,-1.0) to[R, l={$R_{S1}\!=\!0.5\text{ k}\Omega$}] (3,-2.3);
+    \fill[csRed] (3,-2.3) circle (2pt);
+    \draw (3,-2.3) to[R, l={$R_{S2}\!=\!6.5\text{ k}\Omega$}] (3,-3.9) node[ground]{};
+    \draw[csRed] (3,-2.3) -- (6.0,-2.3) to[C, l={$C_3\!=\!\infty$}] (6.0,-3.9) node[ground]{};
+  \fi
+\end{circuitikz}}
+
+% small-signal equivalent.  #1 = 0: source grounded, 1: unbypassed R_S1 in the source
+\newcommand{\sscircuit}[1]{%
+\begin{circuitikz}[american, line width=0.8pt, font=\small, line cap=round, scale=0.85, transform shape]
+  \ctikzset{bipoles/thickness=1.4}
+  % ground bus
+  \draw (0,-1) -- (13.6,-1); \draw (3.6,-1) node[ground]{};
+  % input side
+  \draw (0,-1) to[sV, l_=$v_{\text{sig}}$] (0,3);
+  \draw (0,3) to[R, l={$R_{\text{sig}}\!=\!200\,\text{k}\Omega$}] (2.6,3) -- (3.6,3) coordinate (G);
+  \fill (G) circle (1.7pt);
+  \node[above, font=\footnotesize] at (G) {$G$};
+  \draw (G) to[R, l_={$R_G\!=\!3.33\,\text{M}\Omega$}] (3.6,-1);
+  \draw[->, >=Stealth, line width=1.1pt] (2.8,3.55) -- (3.6,3.55);
+  \node[above, font=\footnotesize] at (3.2,3.55) {$R_{\text{in}}$};
+  % gate-source port
+  \draw (G) -- (5.2,3);
+  \draw (5.2,3) to[open, v^=$v_{gs}$] (5.2,1.3);
+  \coordinate (S) at (5.2,1.3);
+  \fill (S) circle (1.7pt);
+  \node[left, font=\footnotesize] at (S) {$S$};
+  \draw (S) -- (9.2,1.3);
+  \ifnum#1=1
+    \draw[csRed] (S) to[R, l={$R_{S1}\!=\!0.5\,\text{k}\Omega$}] (5.2,-1);
+  \else
+    \draw (S) -- (5.2,-1);
+  \fi
+  % output side
+  \draw (7.2,3) to[cI, l_=$g_m v_{gs}$] (7.2,1.3);
+  \draw (9.2,3) to[R, l_=\shortstack{$r_o$\\[-1pt]$200\,\text{k}\Omega$}] (9.2,1.3);
+  \draw (7.2,3) -- (13.2,3) coordinate (D);
+  \fill (7.2,3) circle (1.7pt) (9.2,3) circle (1.7pt) (11.2,3) circle (1.7pt) (13.2,3) circle (1.7pt);
+  \node[above, font=\footnotesize] at (7.2,3.05) {$D$};
+  \draw (11.2,3) to[R, l_=\shortstack{$R_D$\\[-1pt]$16\,\text{k}\Omega$}] (11.2,-1);
+  \draw (13.2,3) to[R, l_=\shortstack{$R_L$\\[-1pt]$16\,\text{k}\Omega$}] (13.2,-1);
+  \draw (13.2,3) -- (14.2,3) to[short, -o] (14.7,3) node[right]{$v_o$};
+  \draw[<-, >=Stealth, line width=1.1pt] (11.5,3.55) -- (12.9,3.55);
+  \node[above, font=\footnotesize] at (12.2,3.55) {$R_o$};
+\end{circuitikz}}
+
 \item For the Common Source amplifier circuit shown, the transistor has $V_t=1\,\text{V}$, $\mu_n C_{ox}(W/L)=4\,\text{mA/V}^2$, and $V_A=100\,\text{V}$. All capacitors behave as open circuits under DC and short circuits under AC.\\
 
 (i) Find the DC bias voltage $V_D$ and drain current $I_D$ (ignore Early effect for bias). \\
@@ -5738,87 +6037,7 @@
 (iv) Calculate the maximum peak value of $v_{sig}$ such that $v_{gs} \le 0.1\,V_{OV}$ (small-signal approximation valid). \\
 (v) Suggest a circuit modification that will double the maximum $v_{sig}$ found in (iv) without changing the DC bias point.\\
 \begin{center}
-    \begin{circuitikz}[american, line width=0.8pt,y=1.4cm]
-        \ctikzset{tripoles/mos style/arrows}
-
-    % --- MOSFET Transistor ---
-    % Positioned at (3, 0) to allow ample space on both sides
-    \node[nmos] (M) at (3, 0) {};
-
-    % --- Input Signal Path (Left Side) ---
-    % Signal Source vsig
-    \draw (-6.5, 0) to[vsource, l=$v_{\text{sig}}$] (-6.5, -2.5) node[ground] {};
-    
-    % Rsig Resistor
-    \draw (-6.5, 0) to[R, l={$R_{\text{sig}}\!=\!200\text{ k}\Omega$}] (-3.5, 0)
-          to[short, -o] (-3.0, 0);
-          
-    % Coupling Capacitor C1
-    \draw (-3.0, 0) to[C, l={$C_1\!=\!\infty$}] (-1.0, 0)
-          to[short, -o] (-0.5, 0) node[above=4pt] {$v_{gs}$};
-
-    % Wire from vgs node to the Gate bias divider node
-    \draw (-0.5, 0) -- (1.5, 0);
-    \fill (1.5, 0) circle (2pt);
-    \draw (1.5, 0) -- (M.G);
-
-    % Input Resistance Arrow (R_in)
-    \draw[->, >=stealth, line width=1.2pt] (0.2, -0.5) -- (1.0, -0.5);
-    \node[below] at (0.6, -0.5) {$R_{\text{in}}$};
-
-
-    % --- Gate Bias Resistors (Voltage Divider) ---
-    % Top 10 MOhm Resistor
-    \draw (1.5, 0) -- (1.5, 0.4) to[R, l=$10\text{ M}\Omega$] (1.5, 2.8);
-    
-    % Bottom 5 MOhm Resistor
-    \draw (1.5, 0) -- (1.5, -0.4) to[R, l_=$5\text{ M}\Omega$] (1.5, -2.8) node[ground] {};
-
-
-    % --- Drain Path & Power Supply ---
-    \fill (M.D) circle (2pt) node[left=4pt] {$V_D$};
-    
-    % Drain Resistor (Drawn top-to-bottom to keep ID current arrow pointing down)
-    \draw (3, 2.8) to[R, l=$16\text{ k}\Omega$, i=$I_D$] (M.D);
-    
-    % Power Supply Rail (+15V)
-    \draw (1.5, 2.8) -- (3, 2.8);
-    \coordinate (VCC) at (2.25, 2.8);
-    \fill (VCC) circle (2pt);
-    \draw (VCC) to[short, -^] (2.25, 3.5) node[above] {$+15\text{ V}$};
-
-
-    % --- Source Path & Bypass Capacitor ---
-    \draw (M.S) -- (3, -1.0);
-    \fill (3, -1.0) circle (2pt);
-    
-    % Source Resistor 7 kOhm
-    \draw (3, -1.0) to[R, l_=$7\text{ k}\Omega$] (3, -3.5) node[ground] {};
-    
-    % Bypass Capacitor C3
-    \draw (3, -1.0) -- (4.8, -1.0)
-          to[C, l={$C_3\!=\!\infty$}] (4.8, -3.5) node[ground] {};
-
-
-    % --- Output Section (Right Side) ---
-    % Connection from Drain to C2
-    \draw (M.D) -| (4.2, 1.0) 
-          to[C, l={$C_2\!=\!\infty$}] (6.2, 1.0);
-    \fill (6.2, 1.0) circle (2pt);
-    
-    % Load Resistor 16 kOhm
-    \draw (6.2, 1.0) to[R, l={$16\text{ k}\Omega$}] (6.2, -1.5) node[ground] {};
-    
-    % Output Terminal vo
-    \draw (6.2, 1.0) to[short, -o] (7.8, 1.0) node[right] {$v_o$};
-
-    % Output Resistance Arrow (R_o pointing left)
-    \draw[<-, >=stealth, line width=1.2pt] (5.0, 0.5) -- (5.8, 0.5);
-    \node[below] at (5.4, 0.5) {$R_o$};
-
-
-   
-\end{circuitikz}
+    \cscircuit{0}
 \end{center}
 \mk{35} \yr{EEE 263 | L-2/T-1 | 2024--25}
 
@@ -7992,98 +8211,11 @@ and that $\dfrac{C_1}{C_2} = g_m R$.
 \begin{enumerate}
 
 \item A 555 timer is connected in the configuration shown in Figure below. The capacitor shown in the circuit is 1 nF. Find the values of $R_A$ and $R_B$ required to generate an oscillation frequency of 50kHz and duty cycle of 60\%. What measures can be taken if we want to achieve duty cycle below 50\%?
+
 \begin{center}
-    \begin{circuitikz}[thick, american, scale=1.0, y=1.3cm]
-
-    % IC Bounding Box
-    \draw[thick] (1.5, -1) rectangle (10.75, 8.5);
-
-    % Coordinates for connection dots (junctions)
-    \coordinate (midR) at (0, 7.5);
-    \coordinate (vc) at (0, 5);
-    \coordinate (vcc_split) at (3, 9.5);
-    \coordinate (vth) at (3, 6.5);
-    \coordinate (vtl) at (3, 4.5);
-    \coordinate (gnd_int) at (3, 0.5);
-    \coordinate (vc_split) at (2, 5);
-
-    % External Components (Left Side)
-    \draw (vcc_split) -- (0, 9.5) to[R, l=$R_A$] (midR);
-    \draw (midR) to[R, l=$R_B$] (vc);
-    \draw (vc) to[C, l=$C$] (0, 2) node[ground] {};
-    \node[left=0.1cm] at (vc) {$v_c$};
-
-    % VCC Supply Arrow
-    \draw[-latex] (vcc_split) -- (3, 10.3) node[right] {$V_{CC}$};
-    \draw (vcc_split) -- (3, 8.5);
-
-
-    % Internal Voltage Divider Line
-    \draw (3, 8.5) to[R, l=$R_1$] (vth);
-    \draw (vth) to[R, l=$R_1$] (vtl);
-    \draw (vtl) to[R, l=$R_1$] (3, 2.5) -- (gnd_int) -- (3, 1);
-    
-
-    \draw (gnd_int) -- (3, -1) node[ground] {};
-
-    % Voltage Divider Labels
-    \node[left=0.1cm] at (vth) {$V_{TH}$};
-    \node[left=0.1cm] at (vtl) {$V_{TL}$};
-
-    % Comparators
-    \node[op amp, noinv input up, anchor=-] (comp1) at (5.5, 6.2) {};
-    \node[op amp, noinv input up, anchor=+] (comp2) at (5.5, 4.8) {};
-    \node at (5.5, 7.6) {Comparator 1};
-    \node at (5.5, 5.6) {Comparator 2};
-
-    % Wiring: Voltage Divider to Comparators
-    \draw (vth) -| (comp1.-);
-    \draw (vtl) -| (comp2.+);
-
-    % Wiring: v_c to Comparators
-    \draw (vc) -- (vc_split);
-    \draw (vc_split) -- (2, 7.0) -- (comp1.+);
-    \draw (vc_split) -- (2, 4.0) -- (comp2.-);
-
-    % Flip-Flop Block
-    \draw[thick] (8.5, 3.75) rectangle (10.0, 7.25);
-    \node at (9.25, 5.5) {Flip-flop};
-    \node[anchor=west, xshift=0.1cm] at (8.5, 6.75) {$R$};
-    \node[anchor=west, xshift=0.1cm] at (8.5, 4.25) {$S$};
-    \node[anchor=east, xshift=-0.1cm] at (10.0, 6.75) {$Q$};
-    \node[anchor=east, xshift=-0.1cm] at (10.0, 4.25) {$\overline{Q}$};
-
-    % Wiring: Comparators to Flip-Flop
-    \draw (comp1.out) |- (8.5, 7);
-    \draw (comp2.out) |- (8.5, 4);
-
-    % Output vo
-    \draw (10, 6.75) -- (11.5, 6.75) node[ocirc] {} node[above right] {$v_o$};
-
-    % Transistor Q1 (xscale=-1 mirrors it to put base on the right)
-    \node[npn, xscale=-1] (q1) at (6.5, 1.5) {};
-    \node at (6, 1.5) {$Q_1$};
-
-    % Wiring: Transistor
-    % Base Connection
-    \draw (10.0, 4.25) -- (10.25, 4.25) -- (10.25, 1.5) to[R, l_=$100\ \Omega$] (q1.B);
-    % Emitter Connection
-    \draw (q1.E) |- (gnd_int);
-    % Collector Connection (Discharge line jumping out of the box)
-    \draw (q1.C) -- (6.5, 2.5) -- (-1.5, 2.5) -- (-1.5, 7.5) -- (midR);
-
-    % Draw Junction Dots (filled circles)
-    \filldraw (midR) circle (1.5pt);
-    \filldraw (vc) circle (1.5pt);
-    \filldraw (vcc_split) circle (1.5pt);
-    \filldraw (vth) circle (1.5pt);
-    \filldraw (vtl) circle (1.5pt);
-    \filldraw (gnd_int) circle (1.5pt);
-    \filldraw (vc_split) circle (1.5pt);
-
-\end{circuitikz}
-
+    \scalebox{0.8}{\FFastable{$R_A$}{$R_B$}{$C$}}
 \end{center}
+
 
 \mk{12} \yr{EEE 263 | L-2/T-1 | 2023--24}
 
@@ -8100,93 +8232,7 @@ and that $\dfrac{C_1}{C_2} = g_m R$.
 
 \item Design a circuit using a 555 timer to generate a 100\,kHz square wave with a duty cycle of 40\%. Draw the final connection diagram with proper component values.
 \begin{center}
-    \begin{circuitikz}[american, line width=0.8pt]
-    
-        % --- IC Background Box ---
-        % Drawn first so components sit on top
-        \draw[fill=gray!15, thick] (-1.2, -5.5) rectangle (9.2, 5.2);
-    
-        % --- Voltage Divider Network ---
-        % Top resistor
-        \draw (0, 5.2) -- (0, 4.5) to[R, l_=$R_1$] (0, 3.5) -- (0, 2.0);
-        % Middle resistor
-        \draw (0, 2.0) -- (0, 1.5) to[R, l_=$R_1$] (0, 0.5) -- (0, 0.0);
-        % Bottom resistor
-        \draw (0, 0.0) -- (0, -1.5) to[R, l_=$R_1$] (0, -2.5) -- (0, -5.5);
-        
-        % Voltage divider nodes & labels
-        \fill (0, 2.0) circle (2pt);
-        \node[left] at (-0.2, 2.2) {$V_{TH}$};
-        
-        \fill (0, 0.0) circle (2pt);
-        \node[left] at (-0.2, 0.2) {$V_{TL}$};
-    
-    
-        % --- Comparators ---
-        % noinv input up places '+' on top and '-' on bottom
-        \node[op amp, noinv input up] (C1) at (3.5, 2.5) {};
-        \node[op amp, noinv input up] (C2) at (3.5, -0.5) {};
-        
-        \node at (3.5, 3.8) {Comparator 1};
-        \node at (3.5, 0.8) {Comparator 2};
-    
-    
-        % --- Inputs to Comparators ---
-        % Threshold input (crosses at y=3.0, safely above the resistor)
-        \draw (-3.0, 3.0) node[left] {Threshold} to[short, o-] (C1.+);
-        % V_TH connected to Comp 1 (-)
-        \draw (0, 2.0) -- (C1.-);
-        
-        % V_TL connected to Comp 2 (+)
-        \draw (0, 0.0) -- (C2.+);
-        % Trigger input (crosses at y=-1.0, safely between resistors)
-        \draw (-3.0, -1.0) node[left] {Trigger} to[short, o-] (C2.-);
-    
-    
-        % --- RS Flip-Flop ---
-        \draw[thick] (5.5, -1.5) rectangle (8.0, 3.0);
-        \node[align=center] at (6.75, 0.75) {Flip-flop};
-        
-        % Input pins & connections
-        \node[right] at (5.5, 2.5) {$R$};
-        \node[right] at (5.5, -0.5) {$S$};
-        \draw (C1.out) -- (5.5, 2.5);
-        \draw (C2.out) -- (5.5, -0.5);
-        
-        % Output pins
-        \node[left] at (8.0, 1.5) {$Q$};
-        \node[left] at (8.0, -0.5) {$\overline{Q}$};
-    
-    
-        % --- Transistor & Discharge Circuit ---
-        % xscale=-1 flips the transistor so the base faces right
-        \node[npn, xscale=-1] (Q1) at (3.5, -4.0) {};
-        \node at (2.8, -4.0) {$Q_1$};
-        
-        % Path from Q-bar through 100 ohm resistor to Base
-        \draw (8.0, -0.5) -- (8.5, -0.5) -- (8.5, -4.0) to[R=$100\ \Omega$] (Q1.B);
-        
-        % Path from Collector to Discharge pin (crosses safely at y=-3.0)
-        \draw (Q1.C) |- (-1.2, -3.0);
-        \draw (-3.0, -3.0) node[left] {Discharge} to[short, o-] (-1.2, -3.0);
-        
-        % Path from Emitter to Ground line
-        \draw (Q1.E) |- (0, -5.0);
-        \fill (0, -5.0) circle (2pt);
-    
-    
-        % --- External Vcc, Ground, and Out Terminals ---
-        \draw (0, 5.2) to[short, -o] (0, 6.2) node[above] {$V_{CC}$};
-        \draw (0, -5.5) to[short, -o] (0, -6.5) node[below] {Ground};
-        
-        \draw (8.0, 1.5) -- (9.2, 1.5);
-        \draw (9.2, 1.5) to[short, -o] (10.5, 1.5) node[right] {Out};
-    
-    
-        % --- Caption ---
-    
-    \end{circuitikz}
-    
+    \scalebox{0.8}{\FFblank}
 \end{center}
 \mk{15} \yr{EEE 263 | L-2/T-1 | 2024--25}
 
@@ -8281,7 +8327,141 @@ and that $\dfrac{C_1}{C_2} = g_m R$.
 
 \end{enumerate}
 
-%%──────────────────────────────────────────────────────────────────────
+
+% ================= diagram macros (section: waveform generators) =================
+% Needs in preamble: tikz, circuitikz, arrows.meta, calc
+\providecommand{\Ix}{7.8}
+\providecommand{\integfront}{\draw (Vsq) to[R, l={\integR}] (X);}
+% Schmitt trigger (left) + integrator (right).
+% #1 Vsq name  #2 Vtri name  #3 R(Vsq->V+)  #4 R(Vtri->V+)  #5 integrator R
+% #6 capacitor  #7 Schmitt op-amp name  #8 integrator op-amp name
+\newcommand{\twostage}[8]{%
+\def\integR{#5}%
+\begin{circuitikz}[american, line width=0.9pt, font=\small, line cap=round]
+  \node[op amp] (S) at (0,0) {\scriptsize $#7$};
+  \node[op amp] (I) at (\Ix,-0.48) {\scriptsize $#8$};
+  \node[font=\footnotesize\itshape, gray!60!black] at (0.2,1.55) {Schmitt trigger (bistable)};
+  \node[font=\footnotesize\itshape, gray!60!black] at (\Ix,3.3) {Integrator};
+  % Schmitt: inverting input to ground
+  \draw (S.-) -- ++(-0.7,0) node[ground, rotate=-90] {};
+  % junction J at the + input
+  \coordinate (J) at ($(S.+)+(-0.9,0)$);
+  \draw (S.+) -- (J) node[circ] {};
+  \coordinate (Vsq) at (2.1,0);
+  \draw (S.out) -- (Vsq) node[circ] {};
+  \node[above left, font=\footnotesize, inner sep=1.5pt] at (Vsq) {$#1$};
+  % R from V_sq back to J
+  \draw (J) -- ($(J)+(0,-2.0)$) coordinate (Jb) to[R, l_={#3}] (Jb -| Vsq) -- (Vsq);
+  % R from V_tri to J
+  \coordinate (Gl) at ($(J)+(-2.6,0)$);
+  \draw (Gl) to[R, l={#4}] (J);
+  % integrator
+  \coordinate (X) at ($(I.-)+(-0.7,0)$);
+  \integfront
+  \draw (X) node[circ] {} -- (I.-);
+  \draw (I.+) -- ++(-0.6,0) node[ground, rotate=-90] {};
+  \draw (X) -- ($(X)+(0,2.0)$) coordinate (Ct) to[C, l={#6}] (Ct -| I.out) -- (I.out);
+  % output and feedback
+  \draw (I.out) -- ++(1.0,0) coordinate (Vt) node[circ] {};
+  \draw (Vt) to[short, -o] ++(1.2,0) node[right] {$#2$};
+  \draw (Vt) -- (Vt |- 0,-3.7) -- (Gl |- 0,-3.7) -- (Gl);
+\end{circuitikz}}
+
+% Sawtooth version: two diode/resistor paths in the integrator input
+\newcommand{\sawfront}{%
+  \coordinate (Yt) at ($(X)+(-0.9,0)$);
+  \draw (Vsq) -- (Vsq |- 0,1.2) -- (2.7,1.2) to[R, l=$R_1$] (4.3,1.2) to[D, l=$D_1$] (5.8,1.2) -- (Yt |- 0,1.2) -- (Yt);
+  \draw (Vsq) -- (Vsq |- 0,-1.2) -- (2.7,-1.2) to[R, l_=$R_2$] (4.3,-1.2);
+  \draw (5.8,-1.2) to[D, l_=$D_2$] (4.3,-1.2);
+  \draw (5.8,-1.2) -- (Yt |- 0,-1.2) -- (Yt);
+  \draw (Yt) node[circ] {} -- (X);
+  \node[circ] at (Vsq |- 0,1.2) {};
+  \node[circ] at (Vsq |- 0,-1.2) {};
+}
+
+% ---- square + triangular waveform pair (Schmitt starts HIGH, integrator ramps down first)
+% #1 square name #2 triangle name #3 high #4 low #5 V_TH label #6 V_TL label
+% #7 first-half label #8 second-half label #9 period label
+\newcommand{\wavepair}[9]{%
+\begin{tikzpicture}[x=1.15cm, y=0.55cm, >=Stealth, font=\small, line cap=round, line join=round]
+  \def\yt{-8.0}
+  % ---- square wave
+  \foreach \x in {2,4,6,8} {\draw[gray, dashed, thin] (\x,3.0) -- (\x,\yt-3.0);}
+  \draw[->] (-0.3,0) -- (8.9,0) node[right] {$t$};
+  \draw[->] (0,-3.1) -- (0,3.4) node[above] {$#1$};
+  \draw[gray, dashed, thin] (0,2) -- (8,2);
+  \draw[gray, dashed, thin] (0,-2) -- (8,-2);
+  \node[left] at (0,2) {$#3$};
+  \node[left] at (0,-2) {$#4$};
+  \node[below left, font=\footnotesize] at (0,0) {$0$};
+  \draw[blue!70!black, very thick] (0,2) -- (2,2) -- (2,-2) -- (4,-2) -- (4,2) -- (6,2) -- (6,-2) -- (8,-2);
+  % ---- triangular wave
+  \draw[->] (-0.3,\yt) -- (8.9,\yt) node[right] {$t$};
+  \draw[->] (0,\yt-3.1) -- (0,\yt+3.4) node[above] {$#2$};
+  \draw[gray, dashed, thin] (0,\yt+2) -- (8,\yt+2);
+  \draw[gray, dashed, thin] (0,\yt-2) -- (8,\yt-2);
+  \node[right, font=\footnotesize] at (8.2,\yt+2) {$#5$};
+  \node[right, font=\footnotesize] at (8.2,\yt-2) {$#6$};
+  \node[below left, font=\footnotesize] at (0,\yt) {$0$};
+  \draw[red!75!black, very thick] (0,\yt+2) -- (2,\yt-2) -- (4,\yt+2) -- (6,\yt-2) -- (8,\yt+2);
+  \fill[red!75!black] (0,\yt+2) circle (1.6pt) (2,\yt-2) circle (1.6pt) (4,\yt+2) circle (1.6pt);
+  % ---- dimensions
+  \draw[<->, thin] (0,\yt-3.5) -- (2,\yt-3.5) node[midway, below, fill=white, inner sep=1pt] {$#7$};
+  \draw[<->, thin] (2,\yt-3.5) -- (4,\yt-3.5) node[midway, below, fill=white, inner sep=1pt] {$#8$};
+  \draw[<->, thin] (0,\yt-5.3) -- (4,\yt-5.3) node[midway, below, fill=white, inner sep=1pt] {$#9$};
+  \draw[gray, dashed, thin] (0,\yt-2) -- (0,\yt-5.5);
+  \draw[gray, dashed, thin] (4,\yt-2) -- (4,\yt-5.5);
+\end{tikzpicture}}
+
+% ---- sawtooth: slow ramp down (T_fall = 4 units) and fast ramp up (T_rise = 1 unit)
+\newcommand{\sawpair}{%
+\begin{tikzpicture}[x=0.95cm, y=0.55cm, >=Stealth, font=\small, line cap=round, line join=round]
+  \def\yt{-8.0}
+  \foreach \x in {4,5,9,10} {\draw[gray, dashed, thin] (\x,3.0) -- (\x,\yt-2.2);}
+  \draw[->] (-0.3,0) -- (10.9,0) node[right] {$t$};
+  \draw[->] (0,-3.1) -- (0,3.4) node[above] {$V_{sq}$};
+  \draw[gray, dashed, thin] (0,2) -- (10,2);
+  \draw[gray, dashed, thin] (0,-2) -- (10,-2);
+  \node[left] at (0,2) {$+V_{sat}$};
+  \node[left] at (0,-2) {$-V_{sat}$};
+  \node[below left, font=\footnotesize] at (0,0) {$0$};
+  \draw[blue!70!black, very thick] (0,2) -- (4,2) -- (4,-2) -- (5,-2) -- (5,2) -- (9,2) -- (9,-2) -- (10,-2);
+  \draw[->] (-0.3,\yt) -- (10.9,\yt) node[right] {$t$};
+  \draw[->] (0,\yt-3.1) -- (0,\yt+3.4) node[above] {$V_{out}$};
+  \draw[gray, dashed, thin] (0,\yt+2) -- (10,\yt+2);
+  \draw[gray, dashed, thin] (0,\yt-2) -- (10,\yt-2);
+  \node[right, font=\footnotesize] at (10.2,\yt+2) {$V_{UT}=+V_{sat}\frac{R_3}{R_4}$};
+  \node[right, font=\footnotesize] at (10.2,\yt-2) {$V_{LT}=-V_{sat}\frac{R_3}{R_4}$};
+  \node[below left, font=\footnotesize] at (0,\yt) {$0$};
+  \draw[red!75!black, very thick] (0,\yt+2) -- (4,\yt-2) -- (5,\yt+2) -- (9,\yt-2) -- (10,\yt+2);
+  \fill[red!75!black] (0,\yt+2) circle (1.6pt) (4,\yt-2) circle (1.6pt) (5,\yt+2) circle (1.6pt);
+  \draw[<->, thin] (0,\yt-3.5) -- (4,\yt-3.5) node[midway, below, fill=white, inner sep=1pt] {$T_{fall}$ (slow)};
+  \draw[<->, thin] (4,\yt-3.5) -- (5,\yt-3.5);
+  \node[below right, font=\small, inner sep=1pt] at (5,\yt-3.5) {$T_{rise}$ (fast)};
+  \draw[<->, thin] (0,\yt-5.3) -- (5,\yt-5.3) node[midway, below, fill=white, inner sep=1pt] {$T=T_{fall}+T_{rise}$};
+  \draw[gray, dashed, thin] (0,\yt-2) -- (0,\yt-5.5);
+  \draw[gray, dashed, thin] (5,\yt-2) -- (5,\yt-5.5);
+\end{tikzpicture}}
+
+% ---- hysteresis (transfer) characteristic of a non-inverting bistable
+\newcommand{\hystloop}{%
+\begin{tikzpicture}[x=1.0cm, y=0.9cm, >=Stealth, font=\small, line cap=round, line join=round,
+  mid/.style={decoration={markings, mark=at position 0.55 with {\arrow{Stealth[length=2.6mm]}}}, postaction={decorate}}]
+  \draw[->] (-3.4,0) -- (3.6,0) node[right] {$v_1$};
+  \draw[->] (0,-2.4) -- (0,2.6) node[above] {$v_2$};
+  \node[below left, font=\footnotesize] at (0,0) {$0$};
+  \draw[gray, dashed, thin] (-1.5,1.5) -- (0,1.5);
+  \draw[gray, dashed, thin] (0,-1.5) -- (1.5,-1.5);
+  \draw[cyan!70!black, very thick, mid] (-3.0,-1.5) -- (1.5,-1.5);
+  \draw[cyan!70!black, very thick, mid] (1.5,-1.5) -- (1.5,1.5);
+  \draw[cyan!70!black, very thick, mid] (3.0,1.5) -- (-1.5,1.5);
+  \draw[cyan!70!black, very thick, mid] (-1.5,1.5) -- (-1.5,-1.5);
+  \node[above left] at (0,1.5) {$L_+$};
+  \node[below right] at (0,-1.5) {$L_-$};
+  \node[below left] at (-1.5,0) {$V_{TL}$};
+  \node[below right] at (1.5,0) {$V_{TH}$};
+\end{tikzpicture}}
+
 \subtopic{cF}{Triangular Wave Generator}
 \label{sub:s8-triangular}
 
@@ -8304,115 +8484,10 @@ and that $\dfrac{C_1}{C_2} = g_m R$.
 
 \item A bistable multivibrator with a given hysteresis transfer characteristic is provided. Design a signal generator based on the bistable multivibrator that generates square and triangular waveforms. Choose values of your designed circuit components for which the frequency of oscillation is 1\,MHz.
 \begin{center}
-    \begin{tikzpicture}[thick,>=latex, font=\small]
-
-    % Custom style for placing arrows in the middle of a path segment
-    \tikzset{
-        midarrow/.style={
-            decoration={markings, mark=at position 0.55 with {\arrow{latex}}},
-            postaction={decorate}
-        }
-    }
-
-    % ==========================================
-    % Figure (i): Hysteresis Loop
-    % ==========================================
-    \begin{scope}[shift={(0,0)}]
-        % Axes
-        \draw[thin, ->] (-3,0) -- (3,0) node[right] {$v_1$};
-        \draw[thin, ->] (0,-2.5) -- (0,2.5) node[above] {$v_2$};
-        \node[below right] at (0,0) {$0$};
-        
-        % Axis Labels
-        \node[below left] at (-1.5,0) {$V_{TL}$};
-        \node[below right] at (1.5,0) {$V_{TH}$};
-        \node[above left] at (0, 1.5) {$L_+$};
-        \node[below left] at (0, -1.5) {$L_-$};
-        
-        % Characteristic Loop (non-inverting: counter-clockwise path)
-        \draw[cyan, thick, midarrow] (-2.8, -1.5) -- (0, -1.5);   % bottom branch, v1 increasing
-        \draw[cyan, thick, midarrow] (0, -1.5) -- (1.5, -1.5);
-        \draw[cyan, thick, midarrow] (1.5, -1.5) -- (1.5, 0);     % jump up at V_TH
-        \draw[cyan, thick, midarrow] (1.5, 0) -- (1.5, 1.5);
-        \draw[cyan, thick, midarrow] (2.8, 1.5) -- (1.5, 1.5);    % top branch, v1 decreasing
-        \draw[cyan, thick, midarrow] (1.5, 1.5) -- (0, 1.5);
-        \draw[cyan, thick, midarrow] (0, 1.5) -- (-1.5, 1.5);
-        \draw[cyan, thick, midarrow] (-1.5, 1.5) -- (-1.5, 0);    % jump down at V_TL
-        \draw[cyan, thick, midarrow] (-1.5, 0) -- (-1.5, -1.5);
-
-        % Caption
-    \end{scope}
-
-\end{tikzpicture}
+\hystloop
 \end{center}
 \begin{center}
-    
-\begin{tikzpicture}[thick,>=latex, font=\small]
-
-    % Custom style for placing arrows in the middle of a path segment
-    \tikzset{
-        midarrow/.style={
-            decoration={markings, mark=at position 0.55 with {\arrow{latex}}},
-            postaction={decorate}
-        }
-    }
-    % ==========================================
-    % Figure (ii): Square Waveform (Middle Plot)
-    % ==========================================
-    \begin{scope}[shift={(2.5,0)}]
-        % Axes
-        \draw[thin, ->] (-0.5,0) -- (4.5,0) node[right] {$t$};
-        \draw[thin, ->] (0,-2.5) -- (0,2.5) node[above] {$v_2$};
-        \node[below right] at (0,0) {$0$};
-        
-        % Y-axis Labels
-        \node[left] at (0, 1.5) {$L_+$};
-        \node[left] at (0, -1.5) {$L_-$};
-        
-        % Waveform path
-        \draw[cyan, thick] (-0.5,-1.5) -- (0,-1.5) -- (0,1.5) -- (1.6,1.5) -- (1.6,-1.5) -- (3.6,-1.5) -- (3.6,1.5) -- (4.2,1.5);
-        
-        % Dimension arrows
-        \draw[<->, thin] (0, 2.0) -- (1.6, 2.0) node[midway, fill=white, inner sep=1pt] {$T_1$};
-        \draw[<->, thin] (1.6, 2.0) -- (3.6, 2.0) node[midway, fill=white, inner sep=1pt] {$T_2$};
-        \draw[<->, thin] (0, -2.0) -- (3.6, -2.0) node[midway, fill=white, inner sep=1pt] {$T$};
-        
-        % Dashed reference lines
-        \draw[dashed, thin] (1.6, 1.5) -- (1.6, 2.2);
-        \draw[dashed, thin] (3.6, 1.5) -- (3.6, 2.2);
-        \draw[dashed, thin] (0, 1.5) -- (0, 2.2);
-        \draw[dashed, thin] (0, -1.5) -- (0, -2.2);
-        \draw[dashed, thin] (3.6, -1.5) -- (3.6, -2.2);
-    \end{scope}
-
-    % ==========================================
-    % Figure (ii): Triangular Waveform (Right Plot)
-    % ==========================================
-    \begin{scope}[shift={(12,0)}]
-        % Axes
-        \draw[thin, ->] (-0.5,0) -- (4.5,0) node[right] {$t$};
-        \draw[thin, ->] (0,-2.5) -- (0,2.5) node[above] {$v_1$};
-        \node[below right] at (0,0) {$0$};
-        
-        % Y-axis Labels
-        \node[left] at (0, 1.5) {$V_{TH}$};
-        \node[left] at (0, -1.5) {$V_{TL}$};
-        
-        % Waveform path (calculated slopes for precise geometric matching)
-        \draw[cyan, thick] (-0.5, 0.75) -- (0, 1.5) -- (1.6, -1.5) -- (3.6, 1.5) -- (4.2, 0.375);
-        
-        % Dimension arrows
-        \draw[<->, thin] (0, 2.0) -- (1.6, 2.0) node[midway, fill=white, inner sep=1pt] {$T_1$};
-        \draw[<->, thin] (1.6, 2.0) -- (3.6, 2.0) node[midway, fill=white, inner sep=1pt] {$T_2$};
-        
-        % Dashed reference lines
-        \draw[dashed, thin] (0, 1.5) -- (0, 2.2);
-        \draw[dashed, thin] (1.6, -1.5) -- (1.6, 2.2);
-        \draw[dashed, thin] (3.6, 1.5) -- (3.6, 2.2);
-    \end{scope}
-    
-
-\end{tikzpicture}
+\wavepair{v_2}{v_1}{L_+}{L_-}{V_{TH}}{V_{TL}}{T_1}{T_2}{T=T_1+T_2}
 \end{center}
 \mk{18} \yr{EEE 263 | L-2/T-1 | Jan--2021}
 

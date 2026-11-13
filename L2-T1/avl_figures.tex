@@ -1,0 +1,998 @@
+% =====================================================================
+%  avl_figures.tex  --  redesigned diagrams, same look as the
+%  "x is left-heavy" (LL / LR) figure.
+%
+%  PREAMBLE NEEDS (you already have most of it):
+%    \usepackage{tikz,xcolor,graphicx,amsmath}
+%    \usetikzlibrary{arrows.meta,calc,shapes.multipart}
+%    colour cB
+%    your existing macro block: avln, avle, avlm styles and
+%    \avltri, \bfr, \bfl, \avltitle  (keep it, but move it to the preamble)
+%  Then put   \input{avl_figures}   right after that block.
+% =====================================================================
+\usetikzlibrary{arrows.meta,calc,shapes.multipart}
+
+\colorlet{avok}{green!50!black}
+\colorlet{avwarn}{orange!85!black}
+\colorlet{avbad}{red!70!black}
+\colorlet{avneu}{gray!50!black}
+
+\tikzset{
+  avlbad/.style={avln, draw=avbad, fill=red!12},
+  avlnew/.style={avln, draw=avok, fill=green!18},
+  avlpiv/.style={avln, draw=avwarn, fill=orange!22},
+  avlzero/.style={avln, fill=green!8},
+  avlone/.style={avln, fill=orange!8},
+  avlghost/.style={avln, dashed, draw=gray, fill=white, text=gray},
+  avlpath/.style={very thick, avwarn},
+  avlshort/.style={very thick, avok},
+}
+
+% ---------- primitives ----------
+% in-order layout: node #2 at column #3 (in-order index) and depth #4
+\newcommand{\avG}[5][]{\node[avln,#1] (#2) at ({0.95*(#3)},{-1.25*(#4)}) {#5};}
+\newcommand{\avE}[2]{\draw[avle] (#1) -- (#2);}
+% compact BF tags (right / left of a node)
+\newcommand{\bft}[3]{\node[font=\footnotesize\bfseries,anchor=south west,text=#2,inner sep=0.6pt,fill=white,fill opacity=0.8,text opacity=1] at ($(#1)+(0.30,0.20)$) {#3};}
+\newcommand{\bftl}[3]{\node[font=\footnotesize\bfseries,anchor=south east,text=#2,inner sep=0.6pt,fill=white,fill opacity=0.8,text opacity=1] at ($(#1)+(-0.30,0.20)$) {#3};}
+% arrow between panels: x1, x2, y, label
+\newcommand{\avArr}[4]{\draw[->,very thick,cB] (#1,#3) -- (#2,#3) node[midway,above,font=\small,align=center] {#4};}
+% scale a picture down only if it is wider than the line
+\newsavebox{\avbox}
+\newcommand{\avfit}[1]{\savebox{\avbox}{#1}\ifdim\wd\avbox>\linewidth\resizebox{\linewidth}{!}{\usebox{\avbox}}\else\usebox{\avbox}\fi}
+
+% =====================================================================
+%  1. GENERIC ROTATIONS   (labels are parameters)
+%     \FigRotLL{A}{B}  \FigRotRR{A}{B}  \FigRotLR{A}{B}{C}  \FigRotRL{A}{B}{C}
+%     A = unbalanced node, B = its heavy child, C = grandchild (double rotation)
+% =====================================================================
+\newcommand{\FigRotLL}[2]{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{-0.9}{1.0}{Before\\[-1pt]\footnotesize LL imbalance at $#1$}
+    \node[avlbad] (a) at (0,0) {$#1$};     \bfr{a}{avbad}{+2}
+    \node[avlpiv] (b) at (-2,-1.5) {$#2$}; \bfl{b}{avwarn}{+1}
+    \draw[avle] (a) -- (b) (a) -- (1.8,-1.5) (b) -- (-2.9,-3);
+    \draw[avlm] (b) -- (-1.1,-3);
+    \avltri{1.8}{-1.5}{T_3}{h}{gray!10}
+    \avltri{-1.1}{-3}{T_2}{h}{orange!20}
+    \avltri{-2.9}{-3}{T_1}{h+1}{red!15}
+  \end{scope}
+  \avArr{3.0}{5.4}{-1.8}{Right-Rotate$(#1)$}
+  \begin{scope}[xshift=8.6cm]
+    \avltitle{0}{1.0}{After\\[-1pt]\footnotesize balanced}
+    \node[avln] (b) at (0,0) {$#2$};    \bfr{b}{avok}{0}
+    \node[avln] (a) at (2,-1.5) {$#1$}; \bfr{a}{avok}{0}
+    \draw[avle] (b) -- (-2,-1.5) (b) -- (a) (a) -- (3,-3);
+    \draw[avlm] (a) -- (1,-3);
+    \avltri{-2}{-1.5}{T_1}{h+1}{red!15}
+    \avltri{1}{-3}{T_2}{h}{orange!20}
+    \avltri{3}{-3}{T_3}{h}{gray!10}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigRotRR}[2]{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{1.0}{1.0}{Before\\[-1pt]\footnotesize RR imbalance at $#1$}
+    \node[avlbad] (a) at (0,0) {$#1$};     \bfl{a}{avbad}{-2}
+    \node[avlpiv] (b) at (2,-1.5) {$#2$};  \bfr{b}{avwarn}{-1}
+    \draw[avle] (a) -- (b) (a) -- (-1.8,-1.5) (b) -- (3.1,-3);
+    \draw[avlm] (b) -- (0.9,-3);
+    \avltri{-1.8}{-1.5}{T_1}{h}{gray!10}
+    \avltri{0.9}{-3}{T_2}{h}{orange!20}
+    \avltri{3.1}{-3}{T_3}{h+1}{red!15}
+  \end{scope}
+  \avArr{4.0}{6.0}{-1.8}{Left-Rotate$(#1)$}
+  \begin{scope}[xshift=9.6cm]
+    \avltitle{0}{1.0}{After\\[-1pt]\footnotesize balanced}
+    \node[avln] (b) at (0,0) {$#2$};     \bfl{b}{avok}{0}
+    \node[avln] (a) at (-2,-1.5) {$#1$}; \bfl{a}{avok}{0}
+    \draw[avle] (b) -- (2,-1.5) (b) -- (a) (a) -- (-3,-3);
+    \draw[avlm] (a) -- (-1,-3);
+    \avltri{2}{-1.5}{T_3}{h+1}{red!15}
+    \avltri{-1}{-3}{T_2}{h}{orange!20}
+    \avltri{-3}{-3}{T_1}{h}{gray!10}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% ---- LR panels ----
+\newcommand{\avLRpA}[3]{%
+  \avltitle{-1.2}{1.0}{(a) After insertion\\[-1pt]\footnotesize $#1$ is unbalanced}
+  \node[avlbad] (x) at (0,0) {$#1$};      \bfr{x}{avbad}{+2}
+  \node[avlpiv] (y) at (-2,-1.5) {$#2$};  \bfl{y}{avwarn}{-1}
+  \node[avln] (z) at (-0.8,-3) {$#3$};    \bfr{z}{avneu}{\pm1}
+  \draw[avle] (x) -- (y) (x) -- (1.8,-1.5) (y) -- (-3.4,-3) (y) -- (z) (z) -- (0.1,-4.5);
+  \draw[avlm] (z) -- (-1.7,-4.5);
+  \avltri{1.8}{-1.5}{T_4}{h}{gray!10}
+  \avltri{-3.4}{-3}{T_1}{h}{gray!10}
+  \avltri{-1.7}{-4.5}{T_2}{h\text{ or }h-1}{red!15}
+  \avltri{0.1}{-4.5}{T_3}{h\text{ or }h-1}{red!15}
+  \node[font=\scriptsize, avbad, align=center] at (-0.8,-6.45) {new node inserted in $T_2$ or $T_3$\\[-2pt](the other one has height $h-1$)};}
+\newcommand{\avLRpB}[5]{%
+  \avltitle{-1.5}{1.0}{(b) After Left-Rotate$(#2)$\\[-1pt]\footnotesize now a left--left shape}
+  \node[avlbad] (x) at (0,0) {$#1$};      \bfr{x}{avbad}{+2}
+  \node[avln] (z) at (-2,-1.5) {$#3$};
+  \node[avln] (y) at (-3.4,-3) {$#2$};
+  \draw[avle] (x) -- (z) (x) -- (1.8,-1.5) (z) -- (y) (y) -- (-4.3,-4.5);
+  \draw[#4] (y) -- (-2.5,-4.5);
+  \draw[#5] (z) -- (-0.6,-3);
+  \avltri{1.8}{-1.5}{T_4}{h}{gray!10}
+  \avltri{-0.6}{-3}{T_3}{h\text{ or }h-1}{red!15}
+  \avltri{-4.3}{-4.5}{T_1}{h}{gray!10}
+  \avltri{-2.5}{-4.5}{T_2}{h\text{ or }h-1}{red!15}}
+\newcommand{\avLRpC}[3]{%
+  \avltitle{0}{1.0}{(c) After Right-Rotate$(#1)$\\[-1pt]\footnotesize balanced}
+  \node[avln] (z) at (0,0) {$#3$};         \bfr{z}{avok}{0}
+  \node[avln] (y) at (-2,-1.5) {$#2$};     \bfl{y}{avneu}{0\text{ or }+1}
+  \node[avln] (x) at (2,-1.5) {$#1$};      \bfr{x}{avneu}{0\text{ or }-1}
+  \draw[avle] (z) -- (y) (z) -- (x) (y) -- (-3,-3) (y) -- (-1,-3) (x) -- (3,-3);
+  \draw[avlm] (x) -- (1,-3);
+  \avltri{-3}{-3}{T_1}{h}{gray!10}
+  \avltri{-1}{-3}{T_2}{h\text{ or }h-1}{red!15}
+  \avltri{1}{-3}{T_3}{h\text{ or }h-1}{red!15}
+  \avltri{3}{-3}{T_4}{h}{gray!10}}
+
+\newcommand{\FigRotLR}[3]{\begin{center}
+  \textbf{Step 1: Left-Rotate$(#2)$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avLRpA{#1}{#2}{#3}\end{scope}
+    \avArr{2.9}{5.3}{-2.3}{Left-Rotate$(#2)$}
+    \begin{scope}[xshift=9.6cm]\avLRpB{#1}{#2}{#3}{avlm}{avle}\end{scope}
+  \end{tikzpicture}}\\[10pt]
+  \textbf{Step 2: Right-Rotate$(#1)$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avLRpB{#1}{#2}{#3}{avle}{avlm}\end{scope}
+    \avArr{2.9}{5.3}{-2.3}{Right-Rotate$(#1)$}
+    \begin{scope}[xshift=9.4cm]\avLRpC{#1}{#2}{#3}\end{scope}
+  \end{tikzpicture}}
+\end{center}}
+
+% ---- RL panels (mirror image of LR) ----
+\newcommand{\avRLpA}[3]{%
+  \avltitle{1.2}{1.0}{(a) After insertion\\[-1pt]\footnotesize $#1$ is unbalanced}
+  \node[avlbad] (x) at (0,0) {$#1$};      \bfl{x}{avbad}{-2}
+  \node[avlpiv] (y) at (2,-1.5) {$#2$};   \bfr{y}{avwarn}{+1}
+  \node[avln] (z) at (0.8,-3) {$#3$};     \bfl{z}{avneu}{\pm1}
+  \draw[avle] (x) -- (y) (x) -- (-1.8,-1.5) (y) -- (3.4,-3) (y) -- (z) (z) -- (-0.1,-4.5);
+  \draw[avlm] (z) -- (1.7,-4.5);
+  \avltri{-1.8}{-1.5}{T_1}{h}{gray!10}
+  \avltri{3.4}{-3}{T_4}{h}{gray!10}
+  \avltri{-0.1}{-4.5}{T_2}{h\text{ or }h-1}{red!15}
+  \avltri{1.7}{-4.5}{T_3}{h\text{ or }h-1}{red!15}
+  \node[font=\scriptsize, avbad, align=center] at (0.8,-6.45) {new node inserted in $T_2$ or $T_3$\\[-2pt](the other one has height $h-1$)};}
+\newcommand{\avRLpB}[5]{%
+  \avltitle{1.5}{1.0}{(b) After Right-Rotate$(#2)$\\[-1pt]\footnotesize now a right--right shape}
+  \node[avlbad] (x) at (0,0) {$#1$};      \bfl{x}{avbad}{-2}
+  \node[avln] (z) at (2,-1.5) {$#3$};
+  \node[avln] (y) at (3.4,-3) {$#2$};
+  \draw[avle] (x) -- (z) (x) -- (-1.8,-1.5) (z) -- (y) (y) -- (4.3,-4.5);
+  \draw[#4] (y) -- (2.5,-4.5);
+  \draw[#5] (z) -- (0.6,-3);
+  \avltri{-1.8}{-1.5}{T_1}{h}{gray!10}
+  \avltri{0.6}{-3}{T_2}{h\text{ or }h-1}{red!15}
+  \avltri{4.3}{-4.5}{T_4}{h}{gray!10}
+  \avltri{2.5}{-4.5}{T_3}{h\text{ or }h-1}{red!15}}
+\newcommand{\avRLpC}[3]{%
+  \avltitle{0}{1.0}{(c) After Left-Rotate$(#1)$\\[-1pt]\footnotesize balanced}
+  \node[avln] (z) at (0,0) {$#3$};         \bfr{z}{avok}{0}
+  \node[avln] (y) at (-2,-1.5) {$#1$};     \bfl{y}{avneu}{0\text{ or }+1}
+  \node[avln] (x) at (2,-1.5) {$#2$};      \bfr{x}{avneu}{0\text{ or }-1}
+  \draw[avle] (z) -- (y) (z) -- (x) (y) -- (-3,-3) (x) -- (1,-3) (x) -- (3,-3);
+  \draw[avlm] (y) -- (-1,-3);
+  \avltri{-3}{-3}{T_1}{h}{gray!10}
+  \avltri{-1}{-3}{T_2}{h\text{ or }h-1}{red!15}
+  \avltri{1}{-3}{T_3}{h\text{ or }h-1}{red!15}
+  \avltri{3}{-3}{T_4}{h}{gray!10}}
+
+\newcommand{\FigRotRL}[3]{\begin{center}
+  \textbf{Step 1: Right-Rotate$(#2)$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avRLpA{#1}{#2}{#3}\end{scope}
+    \avArr{4.3}{6.9}{-2.3}{Right-Rotate$(#2)$}
+    \begin{scope}[xshift=10.0cm]\avRLpB{#1}{#2}{#3}{avlm}{avle}\end{scope}
+  \end{tikzpicture}}\\[10pt]
+  \textbf{Step 2: Left-Rotate$(#1)$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avRLpB{#1}{#2}{#3}{avle}{avlm}\end{scope}
+    \avArr{5.2}{7.6}{-2.3}{Left-Rotate$(#1)$}
+    \begin{scope}[xshift=11.2cm]\avRLpC{#1}{#2}{#3}\end{scope}
+  \end{tikzpicture}}
+\end{center}}
+
+% =====================================================================
+%  2. MINIMAL AVL TREES
+% =====================================================================
+% recurrence picture  N(h)=N(h-1)+N(h-2)+1
+\newcommand{\FigMinRec}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \node[avlpiv, minimum size=9mm] (r) at (0,0) {$T_h$};
+  \draw[avle] (r) -- node[above left,font=\scriptsize]{$h-1$} (-2.2,-1.6);
+  \draw[avle] (r) -- node[above right,font=\scriptsize]{$h-2$} (2.2,-1.6);
+  \avltri{-2.2}{-1.6}{T_{h-1}}{N(h-1)\text{ nodes}}{gray!10}
+  \avltri{2.2}{-1.6}{T_{h-2}}{N(h-2)\text{ nodes}}{gray!10}
+  \node[font=\small, anchor=west] at (4.2,-1.1) {$N(h)=N(h-1)+N(h-2)+1$};
+\end{tikzpicture}}\end{center}}
+
+% the 20-node minimal AVL tree of height 5 (keys 1..20, in-order layout)
+\newcommand{\FigMinTwenty}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  % level guides
+  \foreach \d in {0,1,2,3,4,5}{\node[font=\scriptsize, gray!70!black, anchor=east] at (0.25,{-1.25*\d}) {level $\d$};}
+  % nodes (BF=+1 -> orange tint, BF=0 -> green tint)
+  \avG[avlone]{n13}{13}{0}{13}
+  \avG[avlone]{n8}{8}{1}{8}    \avG[avlone]{n18}{18}{1}{18}
+  \avG[avlone]{n5}{5}{2}{5}    \avG[avlone]{n11}{11}{2}{11}
+  \avG[avlone]{n16}{16}{2}{16} \avG[avlone]{n20}{20}{2}{20}
+  \avG[avlone]{n3}{3}{3}{3}    \avG[avlone]{n7}{7}{3}{7}
+  \avG[avlone]{n10}{10}{3}{10} \avG[avlone]{n15}{15}{3}{15}
+  \avG[avlzero]{n12}{12}{3}{12}\avG[avlzero]{n17}{17}{3}{17}
+  \avG[avlzero]{n19}{19}{3}{19}
+  \avG[avlone]{n2}{2}{4}{2}    \avG[avlzero]{n4}{4}{4}{4}
+  \avG[avlzero]{n6}{6}{4}{6}   \avG[avlzero]{n9}{9}{4}{9}
+  \avG[avlzero]{n14}{14}{4}{14}
+  \avG[avlzero]{n1}{1}{5}{1}
+  % edges
+  \avE{n13}{n8}  \avE{n13}{n18}
+  \avE{n8}{n5}   \avE{n8}{n11}   \avE{n18}{n16} \avE{n18}{n20}
+  \avE{n5}{n3}   \avE{n5}{n7}    \avE{n11}{n10} \avE{n11}{n12}
+  \avE{n16}{n15} \avE{n16}{n17}  \avE{n20}{n19}
+  \avE{n3}{n2}   \avE{n3}{n4}    \avE{n7}{n6}   \avE{n10}{n9} \avE{n15}{n14}
+  \avE{n2}{n1}
+  % subtree sizes
+  \node[font=\scriptsize\bfseries, cB] at ($(n8)+(-0.9,0.55)$) {$N(4)=12$};
+  \node[font=\scriptsize\bfseries, cB] at ($(n18)+(0.9,0.55)$) {$N(3)=7$};
+  % legend
+  \node[avlone, minimum size=4mm] at (6.2,-7.2) {};
+  \node[anchor=west, font=\scriptsize] at (6.5,-7.2) {BF$=+1$};
+  \node[avlzero, minimum size=4mm] at (8.6,-7.2) {};
+  \node[anchor=west, font=\scriptsize] at (8.9,-7.2) {BF$=0$ (leaf)};
+\end{tikzpicture}}\end{center}}
+
+% a 10-node AVL tree with maximum height 3
+\newcommand{\FigTenNodes}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \foreach \d in {0,1,2,3}{\node[font=\scriptsize, gray!70!black, anchor=east] at (0.35,{-1.25*\d}) {level $\d$};}
+  \avG[avlzero]{a50}{5}{0}{50}
+  \avG[avlone]{a30}{3}{1}{30}  \avG[avlzero]{a80}{8}{1}{80}
+  \avG[avlone]{a20}{2}{2}{20}  \avG[avlzero]{a40}{4}{2}{40}
+  \avG[avlone]{a60}{6}{2}{60}  \avG[avlone]{a90}{9}{2}{90}
+  \avG[avlzero]{a10}{1}{3}{10} \avG[avlzero]{a70}{7}{3}{70} \avG[avlzero]{a100}{10}{3}{100}
+  \avE{a50}{a30} \avE{a50}{a80} \avE{a30}{a20} \avE{a30}{a40}
+  \avE{a20}{a10} \avE{a80}{a60} \avE{a80}{a90} \avE{a60}{a70} \avE{a90}{a100}
+  \bft{a50}{avok}{$0$}  \bft{a30}{avwarn}{$+1$} \bft{a80}{avok}{$0$}
+  \bft{a20}{avwarn}{$+1$} \bft{a60}{avwarn}{$-1$} \bft{a90}{avwarn}{$-1$}
+  \node[font=\small, cB] at (4.75,-5.7) {$N(3)=7\;\le\;10\;<\;12=N(4)\ \Rightarrow\ h_{\max}=3$};
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  3. VALID vs INVALID AVL  /  COUNTER-EXAMPLE
+% =====================================================================
+\newcommand{\FigValidInvalid}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{2.4}{0.95}{\textcolor{avok}{Valid AVL tree}\\[-1pt]\footnotesize every $|\mathrm{BF}|\le 1$}
+    \avG[avlone]{a}{3}{0}{20} \avG[avlone]{b}{1}{1}{10}
+    \avG[avlzero]{c}{2}{2}{15} \avG[avlzero]{d}{4}{1}{30}
+    \avE{a}{b} \avE{a}{d} \avE{b}{c}
+    \bft{a}{avwarn}{$+1$} \bft{b}{avwarn}{$-1$} \bft{c}{avok}{$0$} \bft{d}{avok}{$0$}
+  \end{scope}
+  \begin{scope}[xshift=6.5cm]
+    \avltitle{1.9}{0.95}{\textcolor{avbad}{Invalid AVL tree}\\[-1pt]\footnotesize root violates the property}
+    \avG[avlbad]{a}{3}{0}{20} \avG[avlone]{b}{2}{1}{10} \avG[avlzero]{c}{1}{2}{5}
+    \avE{a}{b} \avE{b}{c}
+    \bft{a}{avbad}{$+2$} \bft{b}{avwarn}{$+1$} \bft{c}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% shortest vs longest root-to-leaf path (counter-example)
+\newcommand{\FigCounterEx}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avG[avlpiv]{n50}{8}{0}{50}
+  \avG[avlpiv]{n30}{5}{1}{30}  \avG[avlnew]{n80}{10}{1}{80}
+  \avG[avlpiv]{n20}{2}{2}{20}  \avG[avln]{n40}{7}{2}{40}
+  \avG[avlnew]{n70}{9}{2}{70}  \avG[avln]{n90}{12}{2}{90}
+  \avG[avln]{n10}{1}{3}{10}    \avG[avlpiv]{n25}{4}{3}{25}
+  \avG[avln]{n35}{6}{3}{35}    \avG[avln]{n85}{11}{3}{85}
+  \avG[avlpiv]{n22}{3}{4}{22}
+  \avE{n50}{n30} \avE{n50}{n80} \avE{n30}{n20} \avE{n30}{n40}
+  \avE{n20}{n10} \avE{n20}{n25} \avE{n40}{n35}
+  \avE{n80}{n70} \avE{n80}{n90} \avE{n90}{n85} \avE{n25}{n22}
+  \draw[avlpath] (n50) -- (n30) -- (n20) -- (n25) -- (n22);
+  \draw[avlshort] (n50) -- (n80) -- (n70);
+  \bft{n50}{avwarn}{$+1$} \bft{n30}{avwarn}{$+1$} \bft{n20}{avwarn}{$-1$}
+  \bft{n25}{avwarn}{$+1$} \bft{n40}{avwarn}{$+1$} \bft{n80}{avwarn}{$-1$} \bft{n90}{avwarn}{$+1$}
+  \node[font=\scriptsize\bfseries, avwarn, anchor=west] at ($(n22)+(0.35,0)$) {depth 4};
+  \node[font=\scriptsize\bfseries, avok, anchor=west] at ($(n70)+(0.35,0)$) {depth 2};
+  \node[avlpiv, minimum size=4mm] at (3.0,-6.5) {};
+  \node[anchor=west, font=\scriptsize] at (3.3,-6.5) {longest path (length 4)};
+  \node[avlnew, minimum size=4mm] at (7.2,-6.5) {};
+  \node[anchor=west, font=\scriptsize] at (7.5,-6.5) {shortest path (length 2)};
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  4. OPERATION TRACE  (insert 15,22,24,7,9 ; delete 24)
+% =====================================================================
+\newcommand{\FigOpsIandII}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0.95}{0.9}{(i) insert $15$}
+    \avG[avlnew]{a}{1}{0}{15}  \bft{a}{avok}{$0$}
+  \end{scope}
+  \begin{scope}[xshift=5cm]
+    \avltitle{1.4}{0.9}{(ii) insert $22$}
+    \avG[avlone]{a}{1}{0}{15} \avG[avlnew]{b}{2}{1}{22}
+    \avE{a}{b}  \bft{a}{avwarn}{$-1$} \bft{b}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigOpsIII}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{1.9}{0.9}{(iii) insert $24$\\[-1pt]\footnotesize RR imbalance at $15$}
+    \avG[avlbad]{a}{1}{0}{15} \avG[avlpiv]{b}{2}{1}{22} \avG[avlnew]{c}{3}{2}{24}
+    \avE{a}{b} \avE{b}{c}
+    \bft{a}{avbad}{$-2$} \bft{b}{avwarn}{$-1$} \bft{c}{avok}{$0$}
+  \end{scope}
+  \avArr{3.6}{5.6}{-1.25}{Left-Rotate$(15)$}
+  \begin{scope}[xshift=6.5cm]
+    \avltitle{1.9}{0.9}{After rotation\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{15} \avG[avln]{b}{2}{0}{22} \avG[avln]{c}{3}{1}{24}
+    \avE{b}{a} \avE{b}{c}
+    \bft{a}{avok}{$0$} \bft{b}{avok}{$0$} \bft{c}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigOpsIV}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.4}{0.9}{(iv) insert $7$\\[-1pt]\footnotesize no imbalance}
+  \avG[avlnew]{a}{1}{2}{7}  \avG[avlone]{b}{2}{1}{15}
+  \avG[avlone]{c}{3}{0}{22} \avG[avln]{d}{4}{1}{24}
+  \avE{c}{b} \avE{c}{d} \avE{b}{a}
+  \bft{a}{avok}{$0$} \bft{b}{avwarn}{$+1$} \bft{c}{avwarn}{$+1$} \bft{d}{avok}{$0$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigOpsV}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{2.9}{0.9}{(v) insert $9$\\[-1pt]\footnotesize LR imbalance at $15$}
+    \avG[avlpiv]{a}{1}{2}{7} \avG[avlnew]{b}{2}{3}{9} \avG[avlbad]{c}{3}{1}{15}
+    \avG[avln]{d}{4}{0}{22}  \avG[avln]{e}{5}{1}{24}
+    \avE{d}{c} \avE{d}{e} \avE{c}{a} \avE{a}{b}
+    \bft{a}{avwarn}{$-1$} \bft{b}{avok}{$0$} \bft{c}{avbad}{$+2$} \bft{d}{avwarn}{$+2$} \bft{e}{avok}{$0$}
+  \end{scope}
+  \avArr{5.5}{7.5}{-1.9}{Left-Rotate$(7)$}
+  \begin{scope}[xshift=7.2cm]
+    \avltitle{2.9}{0.9}{after Left-Rotate$(7)$\\[-1pt]\footnotesize left--left shape}
+    \avG[avln]{a}{1}{3}{7} \avG[avlpiv]{b}{2}{2}{9} \avG[avlbad]{c}{3}{1}{15}
+    \avG[avln]{d}{4}{0}{22}  \avG[avln]{e}{5}{1}{24}
+    \avE{d}{c} \avE{d}{e} \avE{c}{b} \avE{b}{a}
+    \bft{b}{avwarn}{$+1$} \bft{c}{avbad}{$+2$}
+  \end{scope}
+  \avArr{12.7}{14.7}{-1.9}{Right-Rotate$(15)$}
+  \begin{scope}[xshift=14.4cm]
+    \avltitle{2.9}{0.9}{after Right-Rotate$(15)$\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{2}{7} \avG[avln]{b}{2}{1}{9} \avG[avln]{c}{3}{2}{15}
+    \avG[avln]{d}{4}{0}{22}  \avG[avln]{e}{5}{1}{24}
+    \avE{d}{b} \avE{d}{e} \avE{b}{a} \avE{b}{c}
+    \bft{b}{avok}{$0$} \bft{d}{avwarn}{$+1$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigOpsVI}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{2.4}{0.9}{(vi) delete $24$\\[-1pt]\footnotesize LL-type imbalance at $22$}
+    \avG[avln]{a}{1}{2}{7} \avG[avln]{b}{2}{1}{9} \avG[avln]{c}{3}{2}{15}
+    \avG[avlbad]{d}{4}{0}{22}
+    \avG[avlghost]{g}{5}{1}{24}
+    \draw[dashed, gray] (d) -- (g);
+    \avE{d}{b} \avE{b}{a} \avE{b}{c}
+    \bft{b}{avok}{$0$} \bft{d}{avbad}{$+2$}
+  \end{scope}
+  \avArr{5.6}{7.6}{-1.9}{Right-Rotate$(22)$}
+  \begin{scope}[xshift=7.4cm]
+    \avltitle{2.0}{0.9}{Final tree\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{7} \avG[avln]{b}{2}{0}{9} \avG[avln]{c}{3}{2}{15}
+    \avG[avln]{d}{4}{1}{22}
+    \avE{b}{a} \avE{b}{d} \avE{d}{c}
+    \bft{a}{avok}{$0$} \bft{b}{avwarn}{$-1$} \bft{c}{avok}{$0$} \bft{d}{avwarn}{$+1$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  5. GIVEN TREE 60,40,70,30,65 : insert 20 then 68
+% =====================================================================
+\newcommand{\FigInsA}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{3.3}{0.9}{Tree after inserting $20$\\[-1pt]\footnotesize lowest unbalanced node: $40$ (LL)}
+    \avG[avlnew]{a}{1}{3}{20} \avG[avlpiv]{b}{2}{2}{30} \avG[avlbad]{c}{3}{1}{40}
+    \avG[avln]{d}{4}{0}{60}   \avG[avln]{e}{5}{2}{65}   \avG[avln]{f}{6}{1}{70}
+    \avE{d}{c} \avE{d}{f} \avE{c}{b} \avE{b}{a} \avE{f}{e}
+    \bft{a}{avok}{$0$} \bft{b}{avwarn}{$+1$} \bft{c}{avbad}{$+2$}
+    \bft{d}{avwarn}{$+1$} \bft{e}{avok}{$0$} \bft{f}{avwarn}{$+1$}
+  \end{scope}
+  \avArr{6.5}{8.7}{-1.9}{Right-Rotate$(40)$}
+  \begin{scope}[xshift=8.4cm]
+    \avltitle{3.3}{0.9}{Resulting tree\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{2}{20} \avG[avln]{b}{2}{1}{30} \avG[avln]{c}{3}{2}{40}
+    \avG[avln]{d}{4}{0}{60} \avG[avln]{e}{5}{2}{65} \avG[avln]{f}{6}{1}{70}
+    \avE{d}{b} \avE{d}{f} \avE{b}{a} \avE{b}{c} \avE{f}{e}
+    \bft{b}{avok}{$0$} \bft{d}{avok}{$0$} \bft{f}{avwarn}{$+1$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigInsB}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{3.8}{0.9}{Tree after inserting $68$\\[-1pt]\footnotesize lowest unbalanced node: $70$ (LR)}
+    \avG[avln]{a}{1}{2}{20} \avG[avln]{b}{2}{1}{30} \avG[avln]{c}{3}{2}{40}
+    \avG[avln]{d}{4}{0}{60} \avG[avlpiv]{e}{5}{2}{65} \avG[avlnew]{f}{6}{3}{68}
+    \avG[avlbad]{g}{7}{1}{70}
+    \avE{d}{b} \avE{d}{g} \avE{b}{a} \avE{b}{c} \avE{g}{e} \avE{e}{f}
+    \bft{b}{avok}{$0$} \bft{d}{avwarn}{$-1$} \bft{e}{avwarn}{$-1$} \bft{f}{avok}{$0$} \bft{g}{avbad}{$+2$}
+  \end{scope}
+  \avArr{7.2}{9.2}{-1.9}{LR double\\rotation at $70$}
+  \begin{scope}[xshift=9.0cm]
+    \avltitle{3.8}{0.9}{Final tree\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{2}{20} \avG[avln]{b}{2}{1}{30} \avG[avln]{c}{3}{2}{40}
+    \avG[avln]{d}{4}{0}{60} \avG[avln]{e}{5}{2}{65} \avG[avln]{f}{6}{1}{68}
+    \avG[avln]{g}{7}{2}{70}
+    \avE{d}{b} \avE{d}{f} \avE{b}{a} \avE{b}{c} \avE{f}{e} \avE{f}{g}
+    \bft{b}{avok}{$0$} \bft{d}{avok}{$0$} \bft{f}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  6. INSERT 11,4,15,25,36,47,61,53,75
+% =====================================================================
+\newcommand{\FigNineA}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{2.9}{0.9}{Insert $36$\\[-1pt]\footnotesize RR imbalance at $15$}
+    \avG[avln]{a}{1}{1}{4}  \avG[avln]{b}{2}{0}{11} \avG[avlbad]{c}{3}{1}{15}
+    \avG[avlpiv]{d}{4}{2}{25} \avG[avlnew]{e}{5}{3}{36}
+    \avE{b}{a} \avE{b}{c} \avE{c}{d} \avE{d}{e}
+    \bft{b}{avwarn}{$-2$} \bft{c}{avbad}{$-2$} \bft{d}{avwarn}{$-1$}
+  \end{scope}
+  \avArr{5.4}{7.4}{-1.9}{Left-Rotate$(15)$}
+  \begin{scope}[xshift=7.6cm]
+    \avltitle{2.9}{0.9}{After rotation\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{4}  \avG[avln]{b}{2}{0}{11} \avG[avln]{c}{3}{2}{15}
+    \avG[avln]{d}{4}{1}{25} \avG[avln]{e}{5}{2}{36}
+    \avE{b}{a} \avE{b}{d} \avE{d}{c} \avE{d}{e}
+    \bft{b}{avwarn}{$-1$} \bft{d}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigNineB}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{3.3}{0.9}{Insert $47$\\[-1pt]\footnotesize RR imbalance at the root $11$}
+    \avG[avln]{a}{1}{1}{4}  \avG[avlbad]{b}{2}{0}{11} \avG[avln]{c}{3}{2}{15}
+    \avG[avlpiv]{d}{4}{1}{25} \avG[avln]{e}{5}{2}{36} \avG[avlnew]{f}{6}{3}{47}
+    \avE{b}{a} \avE{b}{d} \avE{d}{c} \avE{d}{e} \avE{e}{f}
+    \bft{b}{avbad}{$-2$} \bft{d}{avwarn}{$-1$} \bft{e}{avwarn}{$-1$}
+  \end{scope}
+  \avArr{6.2}{8.2}{-1.9}{Left-Rotate$(11)$}
+  \begin{scope}[xshift=8.6cm]
+    \avltitle{3.3}{0.9}{After rotation\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{2}{4}  \avG[avln]{b}{2}{1}{11} \avG[avln]{c}{3}{2}{15}
+    \avG[avln]{d}{4}{0}{25} \avG[avln]{e}{5}{1}{36} \avG[avln]{f}{6}{2}{47}
+    \avE{d}{b} \avE{d}{e} \avE{b}{a} \avE{b}{c} \avE{e}{f}
+    \bft{b}{avok}{$0$} \bft{d}{avok}{$0$} \bft{e}{avwarn}{$-1$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigNineC}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{3.8}{0.9}{Insert $61$\\[-1pt]\footnotesize RR imbalance at $36$}
+    \avG[avln]{a}{1}{2}{4}  \avG[avln]{b}{2}{1}{11} \avG[avln]{c}{3}{2}{15}
+    \avG[avln]{d}{4}{0}{25} \avG[avlbad]{e}{5}{1}{36} \avG[avlpiv]{f}{6}{2}{47}
+    \avG[avlnew]{g}{7}{3}{61}
+    \avE{d}{b} \avE{d}{e} \avE{b}{a} \avE{b}{c} \avE{e}{f} \avE{f}{g}
+    \bft{d}{avwarn}{$-1$} \bft{e}{avbad}{$-2$} \bft{f}{avwarn}{$-1$}
+  \end{scope}
+  \avArr{7.2}{9.2}{-1.9}{Left-Rotate$(36)$}
+  \begin{scope}[xshift=9.6cm]
+    \avltitle{3.8}{0.9}{After rotation\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{2}{4}  \avG[avln]{b}{2}{1}{11} \avG[avln]{c}{3}{2}{15}
+    \avG[avln]{d}{4}{0}{25} \avG[avln]{e}{5}{2}{36} \avG[avln]{f}{6}{1}{47}
+    \avG[avln]{g}{7}{2}{61}
+    \avE{d}{b} \avE{d}{f} \avE{b}{a} \avE{b}{c} \avE{f}{e} \avE{f}{g}
+    \bft{d}{avok}{$0$} \bft{f}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigNineD}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \foreach \d in {0,1,2,3}{\node[font=\scriptsize, gray!70!black, anchor=east] at (0.3,{-1.25*\d}) {level $\d$};}
+  \avG[avlone]{a25}{4}{0}{25}
+  \avG[avlzero]{a11}{2}{1}{11}  \avG[avlone]{a47}{6}{1}{47}
+  \avG[avlzero]{a4}{1}{2}{4}    \avG[avlzero]{a15}{3}{2}{15}
+  \avG[avlzero]{a36}{5}{2}{36}  \avG[avlzero]{a61}{8}{2}{61}
+  \avG[avlzero]{a53}{7}{3}{53}  \avG[avlzero]{a75}{9}{3}{75}
+  \avE{a25}{a11} \avE{a25}{a47} \avE{a11}{a4} \avE{a11}{a15}
+  \avE{a47}{a36} \avE{a47}{a61} \avE{a61}{a53} \avE{a61}{a75}
+  \bft{a25}{avwarn}{$-1$} \bft{a11}{avok}{$0$} \bft{a47}{avwarn}{$-1$} \bft{a61}{avok}{$0$}
+  \node[font=\small, cB] at (4.75,-5.3) {final AVL tree: $n=9$, height $h=3$};
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  7. 3-NODE EXAMPLES  (single / double rotation)
+% =====================================================================
+\newcommand{\FigExLL}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{1.9}{0.9}{Before (LL case)\\[-1pt]\footnotesize insert $3,2,1$}
+    \avG[avlnew]{a}{1}{2}{1} \avG[avlpiv]{b}{2}{1}{2} \avG[avlbad]{c}{3}{0}{3}
+    \avE{c}{b} \avE{b}{a}
+    \bft{a}{avok}{$0$} \bft{b}{avwarn}{$+1$} \bft{c}{avbad}{$+2$}
+  \end{scope}
+  \avArr{3.6}{5.6}{-1.25}{Right-Rotate$(3)$}
+  \begin{scope}[xshift=6.5cm]
+    \avltitle{1.9}{0.9}{After\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{1} \avG[avln]{b}{2}{0}{2} \avG[avln]{c}{3}{1}{3}
+    \avE{b}{a} \avE{b}{c}
+    \bft{a}{avok}{$0$} \bft{b}{avok}{$0$} \bft{c}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigExRR}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{1.9}{0.9}{Before (RR case)\\[-1pt]\footnotesize insert $1,2,3$}
+    \avG[avlbad]{a}{1}{0}{1} \avG[avlpiv]{b}{2}{1}{2} \avG[avlnew]{c}{3}{2}{3}
+    \avE{a}{b} \avE{b}{c}
+    \bft{a}{avbad}{$-2$} \bft{b}{avwarn}{$-1$} \bft{c}{avok}{$0$}
+  \end{scope}
+  \avArr{3.6}{5.6}{-1.25}{Left-Rotate$(1)$}
+  \begin{scope}[xshift=6.5cm]
+    \avltitle{1.9}{0.9}{After\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{1} \avG[avln]{b}{2}{0}{2} \avG[avln]{c}{3}{1}{3}
+    \avE{b}{a} \avE{b}{c}
+    \bft{a}{avok}{$0$} \bft{b}{avok}{$0$} \bft{c}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigExLR}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{1.9}{0.9}{Before (LR case)\\[-1pt]\footnotesize insert $3,1,2$}
+    \avG[avlbad]{c}{3}{0}{3} \avG[avlpiv]{a}{1}{1}{1} \avG[avlnew]{b}{2}{2}{2}
+    \avE{c}{a} \avE{a}{b}
+    \bft{c}{avbad}{$+2$} \bft{a}{avwarn}{$-1$} \bft{b}{avok}{$0$}
+  \end{scope}
+  \avArr{3.9}{6.3}{-1.25}{Left-Rotate$(1)$}
+  \begin{scope}[xshift=6.8cm]
+    \avltitle{1.9}{0.9}{Intermediate\\[-1pt]\footnotesize left--left shape}
+    \avG[avlbad]{c}{3}{0}{3} \avG[avln]{b}{2}{1}{2} \avG[avln]{a}{1}{2}{1}
+    \avE{c}{b} \avE{b}{a}
+    \bft{c}{avbad}{$+2$} \bft{b}{avwarn}{$+1$}
+  \end{scope}
+  \avArr{10.3}{12.7}{-1.25}{Right-Rotate$(3)$}
+  \begin{scope}[xshift=13.7cm]
+    \avltitle{1.9}{0.9}{After\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{1} \avG[avln]{b}{2}{0}{2} \avG[avln]{c}{3}{1}{3}
+    \avE{b}{a} \avE{b}{c}
+    \bft{b}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigExRL}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{1.9}{0.9}{Before (RL case)\\[-1pt]\footnotesize insert $1,3,2$}
+    \avG[avlbad]{a}{1}{0}{1} \avG[avlpiv]{c}{3}{1}{3} \avG[avlnew]{b}{2}{2}{2}
+    \avE{a}{c} \avE{c}{b}
+    \bft{a}{avbad}{$-2$} \bft{c}{avwarn}{$+1$} \bft{b}{avok}{$0$}
+  \end{scope}
+  \avArr{3.9}{6.3}{-1.25}{Right-Rotate$(3)$}
+  \begin{scope}[xshift=6.8cm]
+    \avltitle{1.9}{0.9}{Intermediate\\[-1pt]\footnotesize right--right shape}
+    \avG[avlbad]{a}{1}{0}{1} \avG[avln]{b}{2}{1}{2} \avG[avln]{c}{3}{2}{3}
+    \avE{a}{b} \avE{b}{c}
+    \bft{a}{avbad}{$-2$} \bft{b}{avwarn}{$-1$}
+  \end{scope}
+  \avArr{10.3}{12.7}{-1.25}{Left-Rotate$(1)$}
+  \begin{scope}[xshift=13.7cm]
+    \avltitle{1.9}{0.9}{After\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{1}{1} \avG[avln]{b}{2}{0}{2} \avG[avln]{c}{3}{1}{3}
+    \avE{b}{a} \avE{b}{c}
+    \bft{b}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  8. DELETION QUESTION  (T1 has height h-1)
+% =====================================================================
+\newcommand{\FigDelGiven}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \node[avln] (r) at (0,0) {$r$};        \bfl{r}{avwarn}{-1}
+  \node[avln] (a) at (2,-1.5) {$n_1$};   \bfr{a}{avwarn}{+1}
+  \node[avln] (b) at (0.6,-3) {$n_2$};   \bfl{b}{avwarn}{-1}
+  \draw[avle] (r) -- (-2.2,-1.5) (r) -- (a) (a) -- (b) (a) -- (3.4,-3) (b) -- (-0.4,-4.5) (b) -- (1.6,-4.5);
+  \avltri{-2.2}{-1.5}{T_1}{h-1}{orange!20}
+  \avltri{3.4}{-3}{T_4}{h-2}{gray!10}
+  \avltri{-0.4}{-4.5}{T_2}{h-3}{gray!10}
+  \avltri{1.6}{-4.5}{T_3}{h-2}{gray!10}
+  \node[font=\small, anchor=west, align=left] at (3.5,0.1) {$h(n_1)=h$\\$h(n_2)=h-1$};
+  \node[font=\scriptsize, avwarn, align=right, anchor=east] at (-2.9,-2.6) {deletion\\happens\\in $T_1$};
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\avDelPA}{%
+  \avltitle{0.6}{1.0}{(a) $T_1$ shrinks to $h-2$\\[-1pt]\footnotesize root is right-heavy: RL case}
+  \node[avlbad] (r) at (0,0) {$r$};      \bfl{r}{avbad}{-2}
+  \node[avlpiv] (a) at (2,-1.5) {$n_1$}; \bfr{a}{avwarn}{+1}
+  \node[avln] (b) at (0.6,-3) {$n_2$};   \bfl{b}{avneu}{-1}
+  \draw[avle] (r) -- (-2.2,-1.5) (r) -- (a) (a) -- (b) (a) -- (3.4,-3) (b) -- (-0.4,-4.5);
+  \draw[avlm] (b) -- (1.6,-4.5);
+  \avltri{-2.2}{-1.5}{T_1}{h-2}{red!15}
+  \avltri{3.4}{-3}{T_4}{h-2}{gray!10}
+  \avltri{-0.4}{-4.5}{T_2}{h-3}{gray!10}
+  \avltri{1.6}{-4.5}{T_3}{h-2}{orange!20}}
+\newcommand{\avDelPB}[2]{%
+  \avltitle{0.9}{1.0}{(b) After Right-Rotate$(n_1)$\\[-1pt]\footnotesize right--right shape}
+  \node[avlbad] (r) at (0,0) {$r$};      \bfl{r}{avbad}{-2}
+  \node[avln] (b) at (2,-1.5) {$n_2$};
+  \node[avln] (a) at (3.2,-3) {$n_1$};   \bfr{a}{avok}{0}
+  \draw[avle] (r) -- (-2.2,-1.5) (r) -- (b) (b) -- (a) (a) -- (4.1,-4.5);
+  \draw[#1] (a) -- (2.3,-4.5);
+  \draw[#2] (b) -- (0.8,-3);
+  \avltri{-2.2}{-1.5}{T_1}{h-2}{red!15}
+  \avltri{0.8}{-3}{T_2}{h-3}{orange!20}
+  \avltri{2.3}{-4.5}{T_3}{h-2}{gray!10}
+  \avltri{4.1}{-4.5}{T_4}{h-2}{gray!10}}
+\newcommand{\avDelPC}{%
+  \avltitle{0}{1.0}{(c) After Left-Rotate$(r)$\\[-1pt]\footnotesize balanced}
+  \node[avln] (b) at (0,0) {$n_2$};       \bfr{b}{avok}{0}
+  \node[avln] (r) at (-2,-1.5) {$r$};     \bfl{r}{avwarn}{+1}
+  \node[avln] (a) at (2,-1.5) {$n_1$};    \bfr{a}{avok}{0}
+  \draw[avle] (b) -- (r) (b) -- (a) (r) -- (-3,-3) (a) -- (1,-3) (a) -- (3,-3);
+  \draw[avlm] (r) -- (-1,-3);
+  \avltri{-3}{-3}{T_1}{h-2}{red!15}
+  \avltri{-1}{-3}{T_2}{h-3}{orange!20}
+  \avltri{1}{-3}{T_3}{h-2}{gray!10}
+  \avltri{3}{-3}{T_4}{h-2}{gray!10}
+  \node[font=\scriptsize, avbad, align=center] at (0,-5.5) {whole subtree height: $h+1\to h$\\(it shrank, so check the ancestors)};}
+
+\newcommand{\FigDelRL}{\begin{center}
+  \textbf{Step 1: Right-Rotate$(n_1)$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avDelPA\end{scope}
+    \avArr{4.3}{7.4}{-2.3}{Right-Rotate$(n_1)$}
+    \begin{scope}[xshift=10.4cm]\avDelPB{avlm}{avle}\end{scope}
+  \end{tikzpicture}}\\[10pt]
+  \textbf{Step 2: Left-Rotate$(r)$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avDelPB{avle}{avlm}\end{scope}
+    \avArr{5.0}{7.6}{-2.3}{Left-Rotate$(r)$}
+    \begin{scope}[xshift=11.4cm]\avDelPC\end{scope}
+  \end{tikzpicture}}
+\end{center}}
+
+% =====================================================================
+%  9. MULTIWAY / B-TREE
+% =====================================================================
+\newcommand{\FigMultiway}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth,
+  kn/.style={draw=cB, thick, fill=cB!10, rounded corners=2pt, rectangle split, rectangle split horizontal, rectangle split parts=2, font=\small\bfseries, inner sep=4pt}]
+  \node[kn] (r) at (0,0) {20\nodepart{two}50};
+  \node[kn] (a) at (-4,-2.2) {10\nodepart{two}15};
+  \node[kn, rectangle split parts=1] (b) at (0,-2.2) {35};
+  \node[kn] (c) at (4,-2.2) {60\nodepart{two}80};
+  \draw[avle] (r.south west) -- node[above left, font=\scriptsize]{keys $<20$} (a.north);
+  \draw[avle] (r.south) -- node[right, font=\scriptsize, pos=0.45]{$20<$ keys $<50$} (b.north);
+  \draw[avle] (r.south east) -- node[above right, font=\scriptsize]{keys $>50$} (c.north);
+  \node[font=\scriptsize, avneu] at (0,-3.4) {3-way search tree ($m=3$): every node has at most 2 keys and 3 children};
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigBNode}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth,
+  kn/.style={draw=cB, thick, fill=cB!10, rounded corners=2pt, rectangle split, rectangle split horizontal, rectangle split parts=3, font=\small\bfseries, inner sep=5pt}]
+  \node[kn] (n) at (0,0) {$K_1$\nodepart{two}$K_2$\nodepart{three}$K_3$};
+  \draw[avle] (n.south west) -- (-4.5,-1.7);
+  \draw[avle] ($(n.south west)!0.333!(n.south east)$) -- (-1.5,-1.7);
+  \draw[avle] ($(n.south west)!0.667!(n.south east)$) -- (1.5,-1.7);
+  \draw[avle] (n.south east) -- (4.5,-1.7);
+  \avltri{-4.5}{-1.7}{T_0}{\text{keys}<K_1}{gray!10}
+  \avltri{-1.5}{-1.7}{T_1}{K_1<\text{keys}<K_2}{gray!10}
+  \avltri{1.5}{-1.7}{T_2}{K_2<\text{keys}<K_3}{gray!10}
+  \avltri{4.5}{-1.7}{T_3}{\text{keys}>K_3}{gray!10}
+  \node[font=\scriptsize, avneu] at (0,0.9) {a node with $k-1=3$ keys has $k=4$ child pointers};
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  10. 2-3-4 TREE
+% =====================================================================
+\newcommand{\tfc}[2][cB!10]{{\setlength{\fboxsep}{3.2pt}\setlength{\fboxrule}{0.7pt}\fcolorbox{cB}{#1}{\strut\small\bfseries #2}}}
+\newcommand{\tfnode}[3]{\node[inner sep=0pt] (#1) at (#2) {#3};}
+\newcommand{\tfedge}[3]{\draw[avle] ($(#1.south west)!#2!(#1.south east)$) -- (#3.north);}
+% legend: orange = key that moves up / is used, green = new key, red = key to delete
+
+\newcommand{\FigTFa}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0}{0.9}{Root is a full 4-node}
+    \tfnode{r}{0,0}{\tfc{5}\tfc[orange!30]{6}\tfc{12}}
+  \end{scope}
+  \avArr{2.4}{4.6}{-0.2}{split,\\then insert $10$}
+  \begin{scope}[xshift=7.4cm]
+    \avltitle{0}{0.9}{$6$ moves up}
+    \tfnode{r}{0,0}{\tfc{6}}
+    \tfnode{a}{-1.5,-1.6}{\tfc{5}}
+    \tfnode{b}{1.5,-1.6}{\tfc[green!25]{10}\tfc{12}}
+    \tfedge{r}{0}{a} \tfedge{r}{1}{b}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigTFb}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0}{0.9}{Child $[10,12,15]$ is full}
+    \tfnode{r}{0,0}{\tfc{6}}
+    \tfnode{a}{-2,-1.6}{\tfc{5}}
+    \tfnode{b}{2,-1.6}{\tfc{10}\tfc[orange!30]{12}\tfc{15}}
+    \tfedge{r}{0}{a} \tfedge{r}{1}{b}
+  \end{scope}
+  \avArr{3.9}{6.1}{-0.2}{split,\\then insert $8$}
+  \begin{scope}[xshift=9.4cm]
+    \avltitle{0}{0.9}{$12$ moves up}
+    \tfnode{r}{0,0}{\tfc{6}\tfc{12}}
+    \tfnode{a}{-2.8,-1.6}{\tfc{5}}
+    \tfnode{b}{0,-1.6}{\tfc[green!25]{8}\tfc{10}}
+    \tfnode{c}{2.8,-1.6}{\tfc{15}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.5}{b} \tfedge{r}{1}{c}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigTFc}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0}{0.9}{Child $[13,15,17]$ is full}
+    \tfnode{r}{0,0}{\tfc{6}\tfc{12}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.2,-1.6}{\tfc{8}\tfc{10}\tfc{11}}
+    \tfnode{c}{3.0,-1.6}{\tfc{13}\tfc[orange!30]{15}\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.5}{b} \tfedge{r}{1}{c}
+  \end{scope}
+  \avArr{4.9}{7.1}{-0.2}{split,\\then insert $14$}
+  \begin{scope}[xshift=11.6cm]
+    \avltitle{0}{0.9}{$15$ moves up}
+    \tfnode{r}{0,0}{\tfc{6}\tfc{12}\tfc{15}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}\tfc{11}}
+    \tfnode{c}{1.6,-1.6}{\tfc{13}\tfc[green!25]{14}}
+    \tfnode{d}{3.4,-1.6}{\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigTFd}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0}{0.9}{Root is full: split before descending}
+    \tfnode{r}{0,0}{\tfc{6}\tfc[orange!30]{12}\tfc{15}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}\tfc{11}}
+    \tfnode{c}{1.6,-1.6}{\tfc{13}\tfc{14}}
+    \tfnode{d}{3.4,-1.6}{\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+  \end{scope}
+  \avArr{4.8}{7.0}{-0.2}{split,\\then insert $4$}
+  \begin{scope}[xshift=12cm]
+    \avltitle{0}{0.9}{New root $12$ (tree grows one level)}
+    \tfnode{r}{0,0}{\tfc{12}}
+    \tfnode{p}{-3.0,-1.6}{\tfc{6}}
+    \tfnode{q}{3.0,-1.6}{\tfc{15}}
+    \tfnode{a}{-4.2,-3.2}{\tfc[green!25]{4}\tfc{5}}
+    \tfnode{b}{-1.6,-3.2}{\tfc{8}\tfc{10}\tfc{11}}
+    \tfnode{c}{1.9,-3.2}{\tfc{13}\tfc{14}}
+    \tfnode{d}{4.1,-3.2}{\tfc{17}}
+    \tfedge{r}{0}{p} \tfedge{r}{1}{q}
+    \tfedge{p}{0}{a} \tfedge{p}{1}{b} \tfedge{q}{0}{c} \tfedge{q}{1}{d}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% deletion: merged tree (leaf content of first leaf is a parameter)
+\newcommand{\avTFM}[1]{%
+  \tfnode{r}{0,0}{\tfc{6}\tfc{12}\tfc{15}}
+  \tfnode{a}{-3.2,-1.6}{#1}
+  \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}\tfc{11}}
+  \tfnode{c}{1.6,-1.6}{\tfc{13}\tfc{14}}
+  \tfnode{d}{3.4,-1.6}{\tfc{17}}
+  \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}}
+
+\newcommand{\FigTFdelA}{\begin{center}
+  \textbf{Delete $4$, part 1: merge the 2-nodes on the path}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}
+      \tfnode{r}{0,0}{\tfc[orange!30]{12}}
+      \tfnode{p}{-3.0,-1.6}{\tfc[orange!30]{6}}
+      \tfnode{q}{3.0,-1.6}{\tfc[orange!30]{15}}
+      \tfnode{a}{-4.2,-3.2}{\tfc{4}\tfc{5}}
+      \tfnode{b}{-1.6,-3.2}{\tfc{8}\tfc{10}\tfc{11}}
+      \tfnode{c}{1.9,-3.2}{\tfc{13}\tfc{14}}
+      \tfnode{d}{4.1,-3.2}{\tfc{17}}
+      \tfedge{r}{0}{p} \tfedge{r}{1}{q}
+      \tfedge{p}{0}{a} \tfedge{p}{1}{b} \tfedge{q}{0}{c} \tfedge{q}{1}{d}
+    \end{scope}
+    \avArr{5.4}{7.6}{-0.2}{merge\\$6,12,15$}
+    \begin{scope}[xshift=12cm]
+      \avTFM{\tfc{4}\tfc{5}}
+    \end{scope}
+  \end{tikzpicture}}\\[10pt]
+  \textbf{Delete $4$, part 2: remove it from the leaf}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\avTFM{\tfc[red!25]{4}\tfc{5}}\end{scope}
+    \avArr{4.7}{6.9}{-0.2}{delete $4$}
+    \begin{scope}[xshift=11cm]\avTFM{\tfc{5}}\end{scope}
+  \end{tikzpicture}}
+\end{center}}
+
+\newcommand{\FigTFdelB}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0}{0.9}{Delete $12$ (internal key)}
+    \tfnode{r}{0,0}{\tfc{6}\tfc[red!25]{12}\tfc{15}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}\tfc[orange!30]{11}}
+    \tfnode{c}{1.6,-1.6}{\tfc{13}\tfc{14}}
+    \tfnode{d}{3.4,-1.6}{\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+  \end{scope}
+  \avArr{4.8}{7.8}{-0.2}{replace by\\predecessor $11$}
+  \begin{scope}[xshift=12.2cm]
+    \avltitle{0}{0.9}{$11$ moved up}
+    \tfnode{r}{0,0}{\tfc{6}\tfc[green!25]{11}\tfc{15}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}}
+    \tfnode{c}{1.6,-1.6}{\tfc{13}\tfc{14}}
+    \tfnode{d}{3.4,-1.6}{\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigTFdelC}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{0}{0.9}{Delete $13$ (leaf is a 3-node)}
+    \tfnode{r}{0,0}{\tfc{6}\tfc{11}\tfc{15}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}}
+    \tfnode{c}{1.6,-1.6}{\tfc[red!25]{13}\tfc{14}}
+    \tfnode{d}{3.4,-1.6}{\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+  \end{scope}
+  \avArr{4.8}{7.0}{-0.2}{delete $13$}
+  \begin{scope}[xshift=11.2cm]
+    \avltitle{0}{0.9}{After deleting $13$}
+    \tfnode{r}{0,0}{\tfc{6}\tfc{11}\tfc{15}}
+    \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+    \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}}
+    \tfnode{c}{1.6,-1.6}{\tfc{14}}
+    \tfnode{d}{3.4,-1.6}{\tfc{17}}
+    \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  11. INSERT 5, 12, 3, -2, -5, -3, 1
+% =====================================================================
+\newcommand{\FigFiveA}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.4}{0.9}{Steps 1--4: insert $5,12,3,-2$\\[-1pt]\footnotesize no imbalance yet}
+  \avG[avlzero]{a}{1}{2}{$-2$} \avG[avlone]{b}{2}{1}{3}
+  \avG[avlone]{c}{3}{0}{5}   \avG[avlzero]{d}{4}{1}{12}
+  \avE{c}{b} \avE{c}{d} \avE{b}{a}
+  \bft{a}{avok}{$0$} \bft{b}{avwarn}{$+1$} \bft{c}{avwarn}{$+1$} \bft{d}{avok}{$0$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigFiveB}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{2.4}{0.9}{Step 5: insert $-5$\\[-1pt]\footnotesize LL imbalance at $3$}
+    \avG[avlnew]{a}{1}{3}{$-5$} \avG[avlpiv]{b}{2}{2}{$-2$} \avG[avlbad]{c}{3}{1}{3}
+    \avG[avln]{d}{4}{0}{5}   \avG[avln]{e}{5}{1}{12}
+    \avE{d}{c} \avE{d}{e} \avE{c}{b} \avE{b}{a}
+    \bft{a}{avok}{$0$} \bft{b}{avwarn}{$+1$} \bft{c}{avbad}{$+2$} \bft{d}{avwarn}{$+1$} \bft{e}{avok}{$0$}
+  \end{scope}
+  \avArr{5.7}{8.1}{-1.9}{Right-Rotate$(3)$}
+  \begin{scope}[xshift=8.2cm]
+    \avltitle{2.4}{0.9}{After rotation\\[-1pt]\footnotesize balanced}
+    \avG[avln]{a}{1}{2}{$-5$} \avG[avln]{b}{2}{1}{$-2$} \avG[avln]{c}{3}{2}{3}
+    \avG[avln]{d}{4}{0}{5}  \avG[avln]{e}{5}{1}{12}
+    \avE{d}{b} \avE{d}{e} \avE{b}{a} \avE{b}{c}
+    \bft{b}{avok}{$0$} \bft{d}{avwarn}{$+1$} \bft{e}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigFiveC}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{2.4}{0.9}{Step 6: insert $-3$\\[-1pt]\footnotesize LL imbalance at the root $5$}
+    \node[avlbad] (r) at ({0.95*5},0) {$5$};
+    \node[avlpiv] (l) at ({0.95*3},-1.25) {$-2$};
+    \node[avln]   (ll) at ({0.95*2},-2.5) {$-5$};
+    \node[avln]   (lr) at ({0.95*4},-2.5) {$3$};
+    \node[avln]   (rr) at ({0.95*6},-1.25) {$12$};
+    \node[avlnew] (n3) at ({0.95*3},-3.75) {$-3$};
+    \draw[avle] (r) -- (l) (r) -- (rr) (l) -- (ll) (l) -- (lr) (ll) -- (n3);
+    \bft{r}{avbad}{$+2$} \bft{l}{avwarn}{$+1$} \bft{ll}{avwarn}{$-1$}
+  \end{scope}
+  \avArr{6.9}{8.8}{-2.0}{Right-Rotate$(5)$}
+  \begin{scope}[xshift=8.9cm]
+    \avltitle{2.9}{0.9}{After rotation\\[-1pt]\footnotesize balanced}
+    \node[avln] (r) at (2.85,0) {$-2$};
+    \node[avln] (l) at (1.0,-1.25) {$-5$};
+    \node[avln] (rr) at (4.75,-1.25) {$5$};
+    \node[avln] (n3) at (1.9,-2.5) {$-3$};
+    \node[avln] (t3) at (3.8,-2.5) {$3$};
+    \node[avln] (n12) at (5.7,-2.5) {$12$};
+    \draw[avle] (r) -- (l) (r) -- (rr) (l) -- (n3) (rr) -- (t3) (rr) -- (n12);
+    \bft{r}{avok}{$0$} \bft{l}{avwarn}{$-1$} \bft{rr}{avok}{$0$}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigFiveD}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{3.8}{0.9}{Step 7: insert $1$ --- final AVL tree\\[-1pt]\footnotesize no rotation needed}
+  \node[avln] (r) at (3.8,0) {$-2$};
+  \node[avln] (a) at (1.9,-1.25) {$-5$};
+  \node[avln] (b) at (5.7,-1.25) {$5$};
+  \node[avln] (c) at (2.85,-2.5) {$-3$};
+  \node[avln] (d) at (4.75,-2.5) {$3$};
+  \node[avln] (e) at (6.65,-2.5) {$12$};
+  \node[avlnew] (f) at (3.8,-3.75) {$1$};
+  \draw[avle] (r) -- (a) (r) -- (b) (a) -- (c) (b) -- (d) (b) -- (e) (d) -- (f);
+  \bft{r}{avwarn}{$-1$} \bft{a}{avwarn}{$-1$} \bft{b}{avwarn}{$+1$}
+  \bft{c}{avok}{$0$} \bft{d}{avwarn}{$+1$} \bft{e}{avok}{$0$} \bft{f}{avok}{$0$}
+\end{tikzpicture}}\end{center}}
+
+% =====================================================================
+%  12. EXTRA SMALL FIGURES (split versions / question stems)
+% =====================================================================
+% 15, 22 as two separate figures
+\newcommand{\FigOpsI}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{0}{0.9}{(i) insert $15$}
+  \avG[avlnew]{a}{0}{0}{15}  \bft{a}{avok}{$0$}
+\end{tikzpicture}}\end{center}}
+\newcommand{\FigOpsII}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{0.5}{0.9}{(ii) insert $22$\\[-1pt]\footnotesize no rotation needed}
+  \avG[avlone]{a}{0}{0}{15} \avG[avlnew]{b}{1}{1}{22}
+  \avE{a}{b}  \bft{a}{avwarn}{$-1$} \bft{b}{avok}{$0$}
+\end{tikzpicture}}\end{center}}
+
+% question stem: the given tree 60,40,70,30,65 (no BF tags)
+\newcommand{\FigGivenTree}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.85}{0.9}{Given AVL tree}
+  \avG{a}{1}{2}{30} \avG{b}{2}{1}{40} \avG{c}{3}{0}{60}
+  \avG{d}{4}{2}{65} \avG{e}{5}{1}{70}
+  \avE{c}{b} \avE{c}{e} \avE{b}{a} \avE{e}{d}
+\end{tikzpicture}}\end{center}}
+
+% insert 11, 4, 15
+\newcommand{\FigNineS}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{0.95}{0.9}{Steps 1--3: insert $11,4,15$\\[-1pt]\footnotesize no imbalance}
+  \avG[avlzero]{a}{0}{1}{4} \avG[avlzero]{b}{1}{0}{11} \avG[avlzero]{c}{2}{1}{15}
+  \avE{b}{a} \avE{b}{c}
+  \bft{b}{avok}{$0$}
+\end{tikzpicture}}\end{center}}
+
+% final 2-3-4 tree (single panel)
+\newcommand{\FigTFfinal}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{0}{0.9}{Final 2-3-4 tree}
+  \tfnode{r}{0,0}{\tfc{6}\tfc{11}\tfc{15}}
+  \tfnode{a}{-3.2,-1.6}{\tfc{5}}
+  \tfnode{b}{-0.9,-1.6}{\tfc{8}\tfc{10}}
+  \tfnode{c}{1.6,-1.6}{\tfc{14}}
+  \tfnode{d}{3.4,-1.6}{\tfc{17}}
+  \tfedge{r}{0}{a} \tfedge{r}{0.333}{b} \tfedge{r}{0.667}{c} \tfedge{r}{1}{d}
+\end{tikzpicture}}\end{center}}

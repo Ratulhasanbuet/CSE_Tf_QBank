@@ -35,7 +35,7 @@
 \definecolor{cB}{RGB}{1,87,155}
 \definecolor{cC}{RGB}{27,94,32}
 \definecolor{cD}{RGB}{106,27,154}
-\definecolor{cE}{RGB}{230,81,0}
+\definecolor{cE}{RGB}{191,54,12}
 \definecolor{cF}{RGB}{0,96,100}
 \definecolor{cG}{RGB}{136,14,79}
 \definecolor{cH}{RGB}{62,39,35}
@@ -10703,8 +10703,54 @@ The angle $\phi$ of $R_A$ with respect to the horizontal is:
 Determine the components of the reactions at A and B: (i) if the 100-lb load is applied as shown, (ii) if the 100-lb load is moved along its line of action to point F. \mk{15}
 \yr{2023--24}
 \begin{center}
-  \includegraphics[height=0.3\textheight,width=0.75\textwidth,keepaspectratio]{/114.jpeg}
-\end{center}
+\begin{tikzpicture}[x=0.52cm,y=0.52cm,>=Stealth,
+    linkout/.style={line width=11pt, color=cyan!45!blue!70, line cap=round, line join=round},
+    linkin/.style={line width=8.6pt, color=cyan!20!blue!20, line cap=round, line join=round},
+    pin/.style={circle, draw=black!80, fill=white, line width=0.8pt, minimum size=2.6mm, inner sep=0pt},
+    pinB/.style={circle, draw=black!80, fill=black!55, line width=0.8pt, minimum size=2.8mm, inner sep=0pt},
+    dim/.style={<->, line width=0.5pt},
+    lab/.style={font=\small\itshape}]
+
+  % ceiling
+  \fill[black!18] (-2,0.9) rectangle (12,2.2);
+  \draw[black!50,line width=0.6pt] (-2,0.9) -- (12,0.9);
+  % clevis at A and B
+  \foreach \x in {0,10}{
+    \draw[fill=black!35, draw=black!70, rounded corners=2pt] (\x-0.7,0.9) rectangle (\x+0.7,-0.8);
+  }
+  % links: A-F-C (L shape) and B-C-D-E
+  \draw[linkout] (0,0) -- (0,-5) -- (10,-5);
+  \draw[linkin]  (0,0) -- (0,-5) -- (10,-5);
+  \draw[linkout] (10,0) -- (10,-10) -- (6,-10);
+  \draw[linkin]  (10,0) -- (10,-10) -- (6,-10);
+  % pins
+  \node[pinB] at (0,0) {};  \node[pinB] at (10,0) {};
+  \node[pinB] at (10,-5) {};
+  \node[pin] (F) at (6,-5) {};
+  \node[pin] (E) at (6,-10) {};
+  % labels
+  \node[lab,anchor=east] at (-0.8,0) {$A$};
+  \node[lab,anchor=east] at (9.2,0.2) {$B$};
+  \node[lab,anchor=west] at (11.0,-5) {$C$};
+  \node[lab,anchor=west] at (10.9,-10.5) {$D$};
+  \node[lab,anchor=south] at (6,-4.2) {$F$};
+  \node[lab,anchor=east] at (5.2,-10) {$E$};
+  % dashed F--E
+  \draw[dashed,line width=0.7pt] (6,-5.4) -- (6,-9.6);
+  % dimensions
+  \draw[dim] (0,3.2) -- (10,3.2) node[midway,fill=white,inner sep=1.5pt]{10 in.};
+  \draw[line width=0.4pt] (0,2.4) -- (0,3.6); \draw[line width=0.4pt] (10,2.4) -- (10,3.6);
+  \draw[line width=0.4pt] (11.4,0) -- (14.3,0);
+  \draw[line width=0.4pt] (11.9,-5) -- (14.3,-5);
+  \draw[line width=0.4pt] (11.9,-10) -- (14.3,-10);
+  \draw[dim] (13.8,0) -- (13.8,-5)   node[midway,right=3pt]{5 in.};
+  \draw[dim] (13.8,-5) -- (13.8,-10) node[midway,right=3pt]{5 in.};
+  \draw[dim] (6,-11.6) -- (10,-11.6) node[midway,above=0pt,font=\small]{4 in.};
+  \draw[line width=0.4pt] (6,-10.7) -- (6,-11.9); \draw[line width=0.4pt] (10,-10.9) -- (10,-11.9);
+  % load
+  \draw[->, line width=2.2pt, color=red!60!pink!85] (6,-10.3) -- (6,-14);
+  \node[font=\small,text=red!60!pink!85!black,anchor=east] at (5.5,-13.4) {100 lb};
+\end{tikzpicture}\end{center}
 
 \begin{tcolorbox}[enhanced,breakable,ansbox,colback=cE!4,colframe=cE,
   boxrule=0.8pt,arc=5pt,

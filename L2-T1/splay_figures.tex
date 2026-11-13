@@ -1,0 +1,1071 @@
+% =====================================================================
+%  splay_figures.tex -- splay-tree diagrams in the same style as avl_figures.tex
+%  Needs: tikz (+ the libraries below), colour cB, and avl_figures.tex in the same folder.
+%  Colour code used in every splay figure:
+%     orange  = splayed node x      blue = nodes being rotated (p, g)
+%     green   = newly inserted node  orange edge = subtree that moves to a new parent
+% =====================================================================
+\usetikzlibrary{arrows.meta,calc,shapes.multipart}
+\ifdefined\avfit\else
+  % shared base styles/macros (identical to the block at the top of the AVL section)
+  \tikzset{
+    avln/.style={circle, draw=cB, fill=cB!10, thick, minimum size=7.5mm, inner sep=0pt, font=\small},
+    avle/.style={thick, cB!70!black},
+    avlm/.style={very thick, orange!85!black},
+  }
+  \providecommand{\avltri}[5]{%
+    \draw[gray!70!black, thick, fill=#5] (#1,#2) -- ++(-0.55,-1.0) -- ++(1.1,0) -- cycle;
+    \node[font=\small] at (#1,{#2-0.68}) {$#3$};
+    \node[font=\scriptsize, gray!45!black, below=-1pt] at (#1,{#2-1.0}) {$#4$};}
+  \providecommand{\bfr}[3]{\node[font=\scriptsize\bfseries, anchor=west, text=#2, inner sep=1pt] at ($(#1)+(0.38,0.22)$) {BF$=#3$};}
+  \providecommand{\bfl}[3]{\node[font=\scriptsize\bfseries, anchor=east, text=#2, inner sep=1pt] at ($(#1)+(-0.38,0.22)$) {BF$=#3$};}
+  \providecommand{\avltitle}[3]{\node[font=\small\bfseries, align=center] at (#1,#2) {#3};}
+  \input{avl_figures}
+\fi
+
+\tikzset{sppath/.style={avln, fill=cB!30, draw=cB!85!black}}
+
+% ---------- colour legends ----------
+\newcommand{\SpLegend}{\begin{center}\footnotesize
+  \tikz[baseline=-0.6ex]\node[avlpiv,minimum size=3.6mm]{}; \ splayed node $x$\quad
+  \tikz[baseline=-0.6ex]\node[sppath,minimum size=3.6mm]{}; \ nodes rotated ($p$, $g$)\quad
+  \tikz[baseline=-0.6ex]\node[avlnew,minimum size=3.6mm]{}; \ newly inserted node
+\end{center}}
+\newcommand{\SpLegendB}{\begin{center}\footnotesize
+  \tikz[baseline=-0.6ex]\node[avlpiv,minimum size=3.6mm]{}; \ splayed node $x$\quad
+  \tikz[baseline=-0.6ex]\node[sppath,minimum size=3.6mm]{}; \ nodes rotated ($p$, $g$)
+\end{center}}
+
+% =====================================================================
+%  GENERIC SPLAY STEPS (subtrees drawn as triangles)
+% =====================================================================
+\newcommand{\FigSplayZig}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \begin{scope}
+    \avltitle{-0.6}{1.0}{Before\\[-1pt]\footnotesize $x$ is a child of the root $p$}
+    \node[sppath] (p) at (0,0) {$p$};
+    \node[avlpiv] (x) at (-1.8,-1.5) {$x$};
+    \draw[avle] (p) -- (x) (p) -- (1.6,-1.5) (x) -- (-2.7,-3);
+    \draw[avlm] (x) -- (-0.9,-3);
+    \avltri{1.6}{-1.5}{T_3}{}{gray!10}
+    \avltri{-2.7}{-3}{T_1}{}{gray!10}
+    \avltri{-0.9}{-3}{T_2}{}{orange!20}
+  \end{scope}
+  \avArr{2.7}{5.3}{-1.8}{Zig:\\Right-Rotate$(p)$}
+  \begin{scope}[xshift=8.2cm]
+    \avltitle{0.4}{1.0}{After\\[-1pt]\footnotesize $x$ is the root}
+    \node[avlpiv] (x) at (0,0) {$x$};
+    \node[sppath] (p) at (1.8,-1.5) {$p$};
+    \draw[avle] (x) -- (-1.8,-1.5) (x) -- (p) (p) -- (2.7,-3);
+    \draw[avlm] (p) -- (0.9,-3);
+    \avltri{-1.8}{-1.5}{T_1}{}{gray!10}
+    \avltri{0.9}{-3}{T_2}{}{orange!20}
+    \avltri{2.7}{-3}{T_3}{}{gray!10}
+  \end{scope}
+\end{tikzpicture}}\end{center}}
+
+% ---- Zig-Zig panels ----
+\newcommand{\spZZa}{%
+  \avltitle{-1.5}{1.0}{(a) Before\\[-1pt]\footnotesize $x$ and $p$ are both left children}
+  \node[sppath] (g) at (0,0) {$g$};
+  \node[sppath] (p) at (-2,-1.5) {$p$};
+  \node[avlpiv] (x) at (-3.5,-3) {$x$};
+  \draw[avle] (g) -- (p) (g) -- (1.8,-1.5) (p) -- (x) (x) -- (-4.4,-4.5) (x) -- (-2.6,-4.5);
+  \draw[avlm] (p) -- (-0.8,-3);
+  \avltri{1.8}{-1.5}{T_4}{}{gray!10}
+  \avltri{-0.8}{-3}{T_3}{}{orange!20}
+  \avltri{-4.4}{-4.5}{T_1}{}{gray!10}
+  \avltri{-2.6}{-4.5}{T_2}{}{gray!10}}
+\newcommand{\spZZb}[2]{%
+  \avltitle{0}{1.0}{(b) After Right-Rotate$(g)$\\[-1pt]\footnotesize $p$ moves above $g$}
+  \node[sppath] (p) at (0,0) {$p$};
+  \node[avlpiv] (x) at (-2,-1.5) {$x$};
+  \node[sppath] (g) at (2,-1.5) {$g$};
+  \draw[avle] (p) -- (x) (p) -- (g) (x) -- (-3,-3) (x) -- (-1,-3) (g) -- (3,-3);
+  \draw[#1] (g) -- (1,-3);
+  \avltri{-3}{-3}{T_1}{}{gray!10}
+  \avltri{-1}{-3}{T_2}{}{#2}
+  \avltri{1}{-3}{T_3}{}{orange!20}
+  \avltri{3}{-3}{T_4}{}{gray!10}}
+\newcommand{\spZZc}{%
+  \avltitle{0.9}{1.0}{(c) After Right-Rotate$(p)$\\[-1pt]\footnotesize $x$ is the root of this subtree}
+  \node[avlpiv] (x) at (0,0) {$x$};
+  \node[sppath] (p) at (1.8,-1.5) {$p$};
+  \node[sppath] (g) at (3.2,-3) {$g$};
+  \draw[avle] (x) -- (-1.8,-1.5) (x) -- (p) (p) -- (g) (g) -- (2.3,-4.5) (g) -- (4.1,-4.5);
+  \draw[avlm] (p) -- (0.6,-3);
+  \avltri{-1.8}{-1.5}{T_1}{}{gray!10}
+  \avltri{0.6}{-3}{T_2}{}{orange!20}
+  \avltri{2.3}{-4.5}{T_3}{}{orange!20}
+  \avltri{4.1}{-4.5}{T_4}{}{gray!10}}
+
+\newcommand{\FigSplayZigZig}{\begin{center}
+  \textbf{Step 1: rotate the grandparent $g$ first}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\spZZa\end{scope}
+    \avArr{3.0}{5.9}{-2.3}{Right-Rotate$(g)$}
+    \begin{scope}[xshift=9.6cm]\spZZb{avlm}{gray!10}\end{scope}
+  \end{tikzpicture}}\\[10pt]
+  \textbf{Step 2: then rotate the parent $p$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\spZZb{avle}{gray!10}\end{scope}
+    \avArr{4.0}{6.6}{-2.3}{Right-Rotate$(p)$}
+    \begin{scope}[xshift=9.8cm]\spZZc\end{scope}
+  \end{tikzpicture}}
+\end{center}}
+
+% ---- Zig-Zag panels ----
+\newcommand{\spZGa}{%
+  \avltitle{-1.2}{1.0}{(a) Before\\[-1pt]\footnotesize $p$ is a left child, $x$ is a right child}
+  \node[sppath] (g) at (0,0) {$g$};
+  \node[sppath] (p) at (-2,-1.5) {$p$};
+  \node[avlpiv] (x) at (-0.8,-3) {$x$};
+  \draw[avle] (g) -- (p) (g) -- (1.8,-1.5) (p) -- (-3.4,-3) (p) -- (x) (x) -- (0.1,-4.5);
+  \draw[avlm] (x) -- (-1.7,-4.5);
+  \avltri{1.8}{-1.5}{T_4}{}{gray!10}
+  \avltri{-3.4}{-3}{T_1}{}{gray!10}
+  \avltri{-1.7}{-4.5}{T_2}{}{orange!20}
+  \avltri{0.1}{-4.5}{T_3}{}{gray!10}}
+\newcommand{\spZGb}[2]{%
+  \avltitle{-1.8}{1.0}{(b) After Left-Rotate$(p)$\\[-1pt]\footnotesize $x$ moves above $p$}
+  \node[sppath] (g) at (0,0) {$g$};
+  \node[avlpiv] (x) at (-2,-1.5) {$x$};
+  \node[sppath] (p) at (-3.4,-3) {$p$};
+  \draw[avle] (g) -- (x) (g) -- (1.8,-1.5) (x) -- (p) (p) -- (-4.3,-4.5);
+  \draw[#1] (p) -- (-2.5,-4.5);
+  \draw[#2] (x) -- (-0.6,-3);
+  \avltri{1.8}{-1.5}{T_4}{}{gray!10}
+  \avltri{-0.6}{-3}{T_3}{}{orange!20}
+  \avltri{-4.3}{-4.5}{T_1}{}{gray!10}
+  \avltri{-2.5}{-4.5}{T_2}{}{orange!20}}
+\newcommand{\spZGc}{%
+  \avltitle{0}{1.0}{(c) After Right-Rotate$(g)$\\[-1pt]\footnotesize $x$ is the root of this subtree}
+  \node[avlpiv] (x) at (0,0) {$x$};
+  \node[sppath] (p) at (-2,-1.5) {$p$};
+  \node[sppath] (g) at (2,-1.5) {$g$};
+  \draw[avle] (x) -- (p) (x) -- (g) (p) -- (-3,-3) (p) -- (-1,-3) (g) -- (3,-3);
+  \draw[avlm] (g) -- (1,-3);
+  \avltri{-3}{-3}{T_1}{}{gray!10}
+  \avltri{-1}{-3}{T_2}{}{orange!20}
+  \avltri{1}{-3}{T_3}{}{orange!20}
+  \avltri{3}{-3}{T_4}{}{gray!10}}
+
+\newcommand{\FigSplayZigZag}{\begin{center}
+  \textbf{Step 1: rotate the parent $p$ first}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\spZGa\end{scope}
+    \avArr{3.1}{6.2}{-2.3}{Left-Rotate$(p)$}
+    \begin{scope}[xshift=11.0cm]\spZGb{avlm}{avle}\end{scope}
+  \end{tikzpicture}}\\[10pt]
+  \textbf{Step 2: then rotate the grandparent $g$}\\[3pt]
+  \avfit{\begin{tikzpicture}[>=Stealth, line cap=round]
+    \begin{scope}\spZGb{avle}{avlm}\end{scope}
+    \avArr{3.1}{6.2}{-2.3}{Right-Rotate$(g)$}
+    \begin{scope}[xshift=10.4cm]\spZGc\end{scope}
+  \end{tikzpicture}}
+\end{center}}
+
+% =====================================================================
+%  EXACT FIGURES FOR THE QUESTIONS (generated)
+% =====================================================================
+\newcommand{\FigSpGivenA}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{1.42}{0.95}{Given splay tree}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (1.18,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (0.71,-1.15) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.66,-1.15) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (1.18,-2.30) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.13,-2.30) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (1.56,-3.45) {$40$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (0.99,-4.60) {$35$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAone}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.66}{0.95}{Step 1: BST insertion\\[-1pt]\footnotesize $30$ becomes the left child of $35$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.56,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.09,-1.15) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (3.04,-1.15) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.56,-2.30) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (3.51,-2.30) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.94,-3.45) {$40$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.37,-4.60) {$35$};
+  \node[avlnew,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (1.80,-5.75) {$30$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAtwo}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.49}{0.95}{Before\\[-1pt]\footnotesize $x=30$, $p=35$, $g=40$ (left--left)}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.40,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.92,-1.15) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (2.87,-1.15) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.40,-2.30) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (3.35,-2.30) {$45$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.78,-3.45) {$40$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.21,-4.60) {$35$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (1.64,-5.75) {$30$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avltitle{10.40}{0.95}{After Zig-Zig\\[-1pt]\footnotesize $30$ moves two levels up}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (9.88,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (9.40,-1.15) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (10.35,-1.15) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (9.88,-2.30) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.83,-2.30) {$45$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (10.26,-3.45) {$30$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (10.83,-4.60) {$35$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (11.40,-5.75) {$40$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_3_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_3_Fig}{n1_5_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avArr{5.14}{8.33}{-2.98}{Zig-Zig:\\Right-Rotate$(40)$,\\then Right-Rotate$(35)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAthree}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.58}{0.95}{Before\\[-1pt]\footnotesize $x=30$, $p=45$, $g=26$ (right--left)}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.05,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.58,-1.15) {$7$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (2.53,-1.15) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.05,-2.30) {$17$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (3.00,-2.30) {$45$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.43,-3.45) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (3.00,-4.60) {$35$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.57,-5.75) {$40$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avltitle{10.81}{0.95}{After Zig-Zag\\[-1pt]\footnotesize $30$ is a child of the root}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (10.62,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (10.15,-1.15) {$7$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (11.10,-1.15) {$30$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (10.62,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.05,-3.45) {$17$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (11.57,-2.30) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (11.00,-3.45) {$35$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (11.57,-4.60) {$40$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_3_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_3_Fig}{n1_6_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avArr{5.30}{8.50}{-2.98}{Zig-Zag:\\Right-Rotate$(45)$,\\then Left-Rotate$(26)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAfour}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{3.07}{0.95}{Before\\[-1pt]\footnotesize $30$ is the right child of the root $13$}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.88,0.00) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.41,-1.15) {$7$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (3.36,-1.15) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.88,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.31,-3.45) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (3.83,-2.30) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (3.26,-3.45) {$35$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.83,-4.60) {$40$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_6_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avltitle{11.25}{0.95}{After Zig\\[-1pt]\footnotesize $30$ is the new root}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (11.49,0.00) {$30$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (10.49,-1.15) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (10.02,-2.30) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (10.96,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.40,-3.45) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (12.48,-1.15) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (11.92,-2.30) {$35$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (12.48,-3.45) {$40$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_6_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_2_Fig}{n1_4_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avArr{6.29}{9.49}{-2.40}{Zig:\\Left-Rotate$(13)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAfive}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.58}{0.95}{Before\\[-1pt]\footnotesize $x=35$, $p=45$, $g=30$ (right--left)}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.81,0.00) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.82,-1.15) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.34,-2.30) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.29,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.72,-3.45) {$17$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (3.81,-1.15) {$45$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (3.24,-2.30) {$35$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.81,-3.45) {$40$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_6_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_4_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avltitle{10.02}{0.95}{After Zig-Zag\\[-1pt]\footnotesize $35$ is the root}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (10.54,0.00) {$35$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (10.07,-1.15) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (9.50,-2.30) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (9.03,-3.45) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (9.97,-3.45) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (9.41,-4.60) {$17$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (11.02,-1.15) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (10.45,-2.30) {$40$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_7_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_3_Fig}{n1_5_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avArr{5.30}{8.50}{-2.40}{Zig-Zag:\\Right-Rotate$(45)$,\\then Left-Rotate$(30)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAsix}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.00}{0.95}{Splay tree with root $35$}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.52,0.00) {$35$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.04,-1.15) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.48,-2.30) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (1.00,-3.45) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.95,-3.45) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (1.38,-4.60) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (3.00,-1.15) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (2.42,-2.30) {$40$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_7_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avltitle{8.92}{0.95}{Left subtree $T_L$\\[-1pt]\footnotesize root $30$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (9.44,0.00) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (8.87,-1.15) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (8.39,-2.30) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (9.34,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (8.77,-3.45) {$17$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_2_Fig}{n1_4_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avltitle{12.34}{0.95}{Right subtree $T_R$\\[-1pt]\footnotesize root $45$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_1_Fig) at (12.62,0.00) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_2_Fig) at (12.05,-1.15) {$40$};
+  \avE{n2_1_Fig}{n2_2_Fig}
+  \avArr{4.15}{7.35}{-2.40}{Remove the\\root $35$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpAseven}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.00}{0.95}{$T_L$\\[-1pt]\footnotesize $\max=30$ is already the root}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.52,0.00) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.95,-1.15) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.48,-2.30) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.43,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.86,-3.45) {$17$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_4_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avltitle{5.16}{0.95}{$T_R$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (5.44,0.00) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (4.87,-1.15) {$40$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avltitle{10.93}{0.95}{Final splay tree}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n2_1_Fig) at (11.16,0.00) {$30$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_2_Fig) at (10.17,-1.15) {$13$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_3_Fig) at (9.69,-2.30) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_4_Fig) at (10.64,-2.30) {$26$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_5_Fig) at (10.07,-3.45) {$17$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_6_Fig) at (12.16,-1.15) {$45$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_7_Fig) at (11.59,-2.30) {$40$};
+  \avE{n2_1_Fig}{n2_2_Fig}
+  \avE{n2_1_Fig}{n2_6_Fig}
+  \avE{n2_2_Fig}{n2_3_Fig}
+  \avE{n2_2_Fig}{n2_4_Fig}
+  \avE{n2_4_Fig}{n2_5_Fig}
+  \avE{n2_6_Fig}{n2_7_Fig}
+  \avArr{5.97}{9.17}{-1.82}{Attach $T_R$ as the\\right child of $30$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpGivenB}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.32}{0.95}{Given splay tree}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.46,0.00) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.80,-1.15) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.85,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (0.38,-3.45) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.33,-3.45) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.75,-2.30) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.27,-3.45) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.22,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (2.75,-4.60) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (3.70,-4.60) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (3.13,-1.15) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (3.70,-2.30) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (4.27,-3.45) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_11_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_6_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_6_Fig}{n0_8_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_8_Fig}{n0_10_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBone}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.33}{0.95}{Before\\[-1pt]\footnotesize $x=3$, $p=2$, $g=4$ (left--right)}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.47,0.00) {$10$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.81,-1.15) {$4$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.86,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (0.38,-3.45) {$1$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.33,-3.45) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.76,-2.30) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.28,-3.45) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.23,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (2.76,-4.60) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (3.71,-4.60) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (3.14,-1.15) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (3.71,-2.30) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (4.28,-3.45) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_11_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_6_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_3_Fig}{n0_5_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_6_Fig}{n0_8_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_8_Fig}{n0_10_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{10.24}{0.95}{After Zig-Zag (Step 1.1)\\[-1pt]\footnotesize $3$ is a child of the root}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (10.19,0.00) {$10$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (9.71,-1.15) {$3$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (9.24,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (8.67,-3.45) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.19,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (10.76,-3.45) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (10.28,-4.60) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (11.23,-4.60) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (10.76,-5.75) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (11.71,-5.75) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (10.66,-1.15) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (11.23,-2.30) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (11.80,-3.45) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_11_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_2_Fig}{n1_5_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_6_Fig}{n1_8_Fig}
+  \avE{n1_8_Fig}{n1_9_Fig}
+  \avE{n1_8_Fig}{n1_10_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{4.81}{8.01}{-2.98}{Zig-Zag:\\Left-Rotate$(2)$,\\then Right-Rotate$(4)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBtwo}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.91}{0.95}{Before\\[-1pt]\footnotesize $3$ is the left child of the root $10$}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.86,0.00) {$10$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.38,-1.15) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.91,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (1.34,-3.45) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.86,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (3.43,-3.45) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.95,-4.60) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.90,-4.60) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (3.43,-5.75) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (4.38,-5.75) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (3.33,-1.15) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (3.90,-2.30) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (4.47,-3.45) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_11_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_5_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_6_Fig}{n0_8_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_8_Fig}{n0_10_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{11.25}{0.95}{After Zig (Step 1.2)\\[-1pt]\footnotesize $3$ is the root}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (10.73,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (10.26,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (9.69,-2.30) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (11.21,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.73,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (11.30,-3.45) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (10.83,-4.60) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (11.78,-4.60) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (11.30,-5.75) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (12.25,-5.75) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (11.68,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (12.25,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (12.82,-4.60) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_4_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avE{n1_4_Fig}{n1_11_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_6_Fig}{n1_8_Fig}
+  \avE{n1_8_Fig}{n1_9_Fig}
+  \avE{n1_8_Fig}{n1_10_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{5.96}{9.16}{-2.98}{Zig:\\Right-Rotate$(10)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBthree}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.41}{0.95}{Before\\[-1pt]\footnotesize $x=9$, $p=8$, $g=6$ (right--right)}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (1.89,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.41,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.84,-2.30) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.36,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.89,-2.30) {$4$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.46,-3.45) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (1.98,-4.60) {$5$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (2.93,-4.60) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (2.46,-5.75) {$7$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (3.41,-5.75) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (2.84,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (3.41,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (3.98,-4.60) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_4_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avE{n0_4_Fig}{n0_11_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_6_Fig}{n0_8_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_8_Fig}{n0_10_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{10.40}{0.95}{After Zig-Zig (Step 2.1)\\[-1pt]\footnotesize $9$ moves two levels up}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (9.88,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (9.40,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (8.83,-2.30) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (10.35,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (9.88,-2.30) {$4$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (10.45,-3.45) {$9$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (9.88,-4.60) {$8$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (9.31,-5.75) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (8.83,-6.90) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (9.78,-6.90) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (10.83,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (11.40,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (11.97,-4.60) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_4_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avE{n1_4_Fig}{n1_11_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avE{n1_8_Fig}{n1_9_Fig}
+  \avE{n1_8_Fig}{n1_10_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{4.97}{8.17}{-3.55}{Zig-Zig:\\Left-Rotate$(6)$,\\then Left-Rotate$(8)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBfour}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.41}{0.95}{Before\\[-1pt]\footnotesize $x=9$, $p=4$, $g=10$ (left--right)}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (1.89,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.41,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.84,-2.30) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.36,-1.15) {$10$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.89,-2.30) {$4$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.46,-3.45) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (1.89,-4.60) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (1.32,-5.75) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (0.84,-6.90) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (1.79,-6.90) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (2.84,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (3.41,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (3.98,-4.60) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_4_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avE{n0_4_Fig}{n0_11_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_8_Fig}{n0_10_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{10.55}{0.95}{After Zig-Zag (Step 2.2)\\[-1pt]\footnotesize $9$ is a child of the root}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (9.74,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (9.27,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (8.70,-2.30) {$1$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (10.21,-1.15) {$9$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (9.74,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (10.31,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (9.74,-4.60) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (9.27,-5.75) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (10.21,-5.75) {$7$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (10.69,-2.30) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (11.26,-3.45) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (11.83,-4.60) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (12.40,-5.75) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_4_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avE{n1_4_Fig}{n1_10_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avE{n1_7_Fig}{n1_9_Fig}
+  \avE{n1_10_Fig}{n1_11_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{4.97}{8.17}{-3.55}{Zig-Zag:\\Left-Rotate$(4)$,\\then Right-Rotate$(10)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBfive}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.91}{0.95}{Before\\[-1pt]\footnotesize $9$ is the right child of the root $3$}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.10,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.62,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.05,-2.30) {$1$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.57,-1.15) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.10,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.67,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.10,-4.60) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (1.62,-5.75) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (2.57,-5.75) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (3.05,-2.30) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (3.62,-3.45) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (4.19,-4.60) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (4.76,-5.75) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_4_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avE{n0_4_Fig}{n0_10_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avE{n0_7_Fig}{n0_9_Fig}
+  \avE{n0_10_Fig}{n0_11_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{12.21}{0.95}{After Zig (Step 2.3)\\[-1pt]\footnotesize $9$ is the root: tree after part (i)}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (11.88,0.00) {$9$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (11.41,-1.15) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (10.93,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (10.36,-3.45) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (11.88,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (12.45,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (11.88,-4.60) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (11.41,-5.75) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (12.36,-5.75) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (12.36,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (12.93,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (13.50,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (14.07,-4.60) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_10_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_2_Fig}{n1_5_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avE{n1_7_Fig}{n1_9_Fig}
+  \avE{n1_10_Fig}{n1_11_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{5.96}{9.16}{-2.98}{Zig:\\Left-Rotate$(3)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBsix}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.33}{0.95}{Before\\[-1pt]\footnotesize $x=6$, $p=8$, $g=4$ (right--left)}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.00,0.00) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.52,-1.15) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.05,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (0.48,-3.45) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.00,-2.30) {$4$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (2.56,-3.45) {$8$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (2.00,-4.60) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (1.52,-5.75) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (2.47,-5.75) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (2.47,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (3.04,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (3.61,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (4.18,-4.60) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_10_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_5_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avE{n0_7_Fig}{n0_9_Fig}
+  \avE{n0_10_Fig}{n0_11_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{10.81}{0.95}{After Zig-Zag (Step 3.1)\\[-1pt]\footnotesize $6$ is a child of $3$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (10.60,0.00) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (9.81,-1.15) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (9.10,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (8.53,-3.45) {$1$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.53,-2.30) {$6$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (9.48,-3.45) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (10.05,-4.60) {$5$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (11.57,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (11.00,-4.60) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (11.38,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (11.95,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (12.52,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (13.09,-4.60) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_10_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_2_Fig}{n1_5_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_5_Fig}{n1_8_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avE{n1_8_Fig}{n1_9_Fig}
+  \avE{n1_10_Fig}{n1_11_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{4.81}{8.01}{-2.98}{Zig-Zag:\\Right-Rotate$(8)$,\\then Left-Rotate$(4)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBseven}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.66}{0.95}{Before\\[-1pt]\footnotesize $x=6$, $p=3$, $g=9$ (left--right)}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.44,0.00) {$9$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.66,-1.15) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.95,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (0.38,-3.45) {$1$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.37,-2.30) {$6$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_6_Fig) at (1.32,-3.45) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_7_Fig) at (1.90,-4.60) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_8_Fig) at (3.42,-3.45) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_9_Fig) at (2.84,-4.60) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_10_Fig) at (3.23,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_11_Fig) at (3.79,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_12_Fig) at (4.37,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_13_Fig) at (4.94,-4.60) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_10_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_5_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_5_Fig}{n0_8_Fig}
+  \avE{n0_6_Fig}{n0_7_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_10_Fig}{n0_11_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{12.32}{0.95}{After Zig-Zag (Step 3.2)\\[-1pt]\footnotesize $6$ is the root}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (11.75,0.00) {$6$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (10.23,-1.15) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (9.76,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (9.19,-3.45) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (10.71,-2.30) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (11.28,-3.45) {$5$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (13.27,-1.15) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_8_Fig) at (12.79,-2.30) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_9_Fig) at (12.23,-3.45) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_10_Fig) at (13.75,-2.30) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_11_Fig) at (14.32,-3.45) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_12_Fig) at (14.88,-4.60) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_13_Fig) at (15.46,-5.75) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_7_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_2_Fig}{n1_5_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_7_Fig}{n1_8_Fig}
+  \avE{n1_7_Fig}{n1_10_Fig}
+  \avE{n1_8_Fig}{n1_9_Fig}
+  \avE{n1_10_Fig}{n1_11_Fig}
+  \avE{n1_11_Fig}{n1_12_Fig}
+  \avE{n1_12_Fig}{n1_13_Fig}
+  \avArr{5.46}{8.66}{-2.98}{Zig-Zag:\\Left-Rotate$(3)$,\\then Right-Rotate$(9)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBeight}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{3.10}{0.95}{Splay tree with root $6$}
+  \node[avlpiv,minimum size=7.4mm,font=\small\bfseries] (n0_1_Fig) at (2.60,0.00) {$6$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_2_Fig) at (1.28,-1.15) {$3$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_3_Fig) at (0.87,-2.30) {$2$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_4_Fig) at (0.37,-3.45) {$1$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_5_Fig) at (1.69,-2.30) {$4$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_6_Fig) at (2.19,-3.45) {$5$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_7_Fig) at (3.92,-1.15) {$9$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_8_Fig) at (3.51,-2.30) {$8$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_9_Fig) at (3.01,-3.45) {$7$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_10_Fig) at (4.33,-2.30) {$10$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_11_Fig) at (4.83,-3.45) {$11$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_12_Fig) at (5.32,-4.60) {$12$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n0_13_Fig) at (5.82,-5.75) {$13$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_7_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_2_Fig}{n0_5_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_5_Fig}{n0_6_Fig}
+  \avE{n0_7_Fig}{n0_8_Fig}
+  \avE{n0_7_Fig}{n0_10_Fig}
+  \avE{n0_8_Fig}{n0_9_Fig}
+  \avE{n0_10_Fig}{n0_11_Fig}
+  \avE{n0_11_Fig}{n0_12_Fig}
+  \avE{n0_12_Fig}{n0_13_Fig}
+  \avltitle{11.11}{0.95}{Left subtree $T_L$\\[-1pt]\footnotesize root $3$}
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n1_1_Fig) at (11.11,0.00) {$3$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n1_2_Fig) at (10.70,-1.15) {$2$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n1_3_Fig) at (10.20,-2.30) {$1$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n1_4_Fig) at (11.52,-1.15) {$4$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n1_5_Fig) at (12.02,-2.30) {$5$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_4_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avltitle{14.81}{0.95}{Right subtree $T_R$\\[-1pt]\footnotesize root $9$}
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_1_Fig) at (14.31,0.00) {$9$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_2_Fig) at (13.90,-1.15) {$8$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_3_Fig) at (13.40,-2.30) {$7$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_4_Fig) at (14.72,-1.15) {$10$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_5_Fig) at (15.22,-2.30) {$11$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_6_Fig) at (15.71,-3.45) {$12$};
+  \node[avln,minimum size=7.4mm,font=\small\bfseries] (n2_7_Fig) at (16.21,-4.60) {$13$};
+  \avE{n2_1_Fig}{n2_2_Fig}
+  \avE{n2_1_Fig}{n2_4_Fig}
+  \avE{n2_2_Fig}{n2_3_Fig}
+  \avE{n2_4_Fig}{n2_5_Fig}
+  \avE{n2_5_Fig}{n2_6_Fig}
+  \avE{n2_6_Fig}{n2_7_Fig}
+  \avArr{6.34}{9.54}{-2.98}{Remove the\\root $6$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBnine}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{1.67}{0.95}{$T_L$ before\\[-1pt]\footnotesize splay its maximum $5$}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (1.67,0.00) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.19,-1.15) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.62,-2.30) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (2.14,-1.15) {$4$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (2.71,-2.30) {$5$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_1_Fig}{n0_4_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avltitle{8.59}{0.95}{$T_L$ after\\[-1pt]\footnotesize $5$ is the root of $T_L$}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (9.73,0.00) {$5$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (9.16,-1.15) {$4$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (8.59,-2.30) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (8.02,-3.45) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (7.45,-4.60) {$1$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avArr{3.49}{6.69}{-2.40}{Zig-Zig:\\Left-Rotate$(3)$,\\then Left-Rotate$(4)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpBten}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{2.16}{0.95}{$T_L$\\[-1pt]\footnotesize root $5$ has no right child}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (3.27,0.00) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.72,-1.15) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (2.16,-2.30) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (1.61,-3.45) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.06,-4.60) {$1$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avltitle{6.77}{0.95}{$T_R$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (6.21,0.00) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (5.75,-1.15) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (5.20,-2.30) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (6.68,-1.15) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (7.23,-2.30) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_6_Fig) at (7.78,-3.45) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_7_Fig) at (8.33,-4.60) {$13$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_4_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_4_Fig}{n1_5_Fig}
+  \avE{n1_5_Fig}{n1_6_Fig}
+  \avE{n1_6_Fig}{n1_7_Fig}
+  \avltitle{14.94}{0.95}{Final tree after deleting $6$}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n2_1_Fig) at (14.71,0.00) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_2_Fig) at (14.24,-1.15) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_3_Fig) at (13.69,-2.30) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_4_Fig) at (13.14,-3.45) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_5_Fig) at (12.58,-4.60) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_6_Fig) at (15.17,-1.15) {$9$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_7_Fig) at (14.71,-2.30) {$8$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_8_Fig) at (14.15,-3.45) {$7$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_9_Fig) at (15.63,-2.30) {$10$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_10_Fig) at (16.18,-3.45) {$11$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_11_Fig) at (16.73,-4.60) {$12$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_12_Fig) at (17.29,-5.75) {$13$};
+  \avE{n2_1_Fig}{n2_2_Fig}
+  \avE{n2_1_Fig}{n2_6_Fig}
+  \avE{n2_2_Fig}{n2_3_Fig}
+  \avE{n2_3_Fig}{n2_4_Fig}
+  \avE{n2_4_Fig}{n2_5_Fig}
+  \avE{n2_6_Fig}{n2_7_Fig}
+  \avE{n2_6_Fig}{n2_9_Fig}
+  \avE{n2_7_Fig}{n2_8_Fig}
+  \avE{n2_9_Fig}{n2_10_Fig}
+  \avE{n2_10_Fig}{n2_11_Fig}
+  \avE{n2_11_Fig}{n2_12_Fig}
+  \avArr{8.86}{12.06}{-2.98}{Attach $T_R$ as the\\right child of $5$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpGivenC}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{1.51}{0.95}{Given tree}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.65,0.00) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.08,-1.15) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.51,-2.30) {$3$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (0.95,-3.45) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (0.38,-4.60) {$1$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpCone}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{1.51}{0.95}{Initial tree\\[-1pt]\footnotesize $x=1$, $p=2$, $g=3$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (2.65,0.00) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (2.08,-1.15) {$4$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (1.51,-2.30) {$3$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (0.95,-3.45) {$2$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (0.38,-4.60) {$1$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avltitle{7.95}{0.95}{After step 1\\[-1pt]\footnotesize $2$ is now above $3$}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (8.76,0.00) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (8.19,-1.15) {$4$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (7.62,-2.30) {$2$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (7.14,-3.45) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (8.09,-3.45) {$3$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avE{n1_3_Fig}{n1_5_Fig}
+  \avltitle{14.70}{0.95}{After Zig-Zig\\[-1pt]\footnotesize $1$ moved two levels up}
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_1_Fig) at (15.27,0.00) {$5$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_2_Fig) at (14.70,-1.15) {$4$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n2_3_Fig) at (14.13,-2.30) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n2_4_Fig) at (14.70,-3.45) {$2$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n2_5_Fig) at (15.27,-4.60) {$3$};
+  \avE{n2_1_Fig}{n2_2_Fig}
+  \avE{n2_2_Fig}{n2_3_Fig}
+  \avE{n2_3_Fig}{n2_4_Fig}
+  \avE{n2_4_Fig}{n2_5_Fig}
+  \avArr{3.18}{6.38}{-2.40}{1.\\Right-Rotate$(3)$}
+  \avArr{9.52}{12.72}{-2.40}{2.\\Right-Rotate$(2)$}
+\end{tikzpicture}}\end{center}}
+
+\newcommand{\FigSpCtwo}{\begin{center}\avfit{%
+\begin{tikzpicture}[>=Stealth, line cap=round]
+  \avltitle{1.17}{0.95}{Current tree\\[-1pt]\footnotesize $x=1$, $p=4$, $g=5$}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_1_Fig) at (1.74,0.00) {$5$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n0_2_Fig) at (1.17,-1.15) {$4$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n0_3_Fig) at (0.60,-2.30) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_4_Fig) at (1.17,-3.45) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n0_5_Fig) at (1.74,-4.60) {$3$};
+  \avE{n0_1_Fig}{n0_2_Fig}
+  \avE{n0_2_Fig}{n0_3_Fig}
+  \avE{n0_3_Fig}{n0_4_Fig}
+  \avE{n0_4_Fig}{n0_5_Fig}
+  \avltitle{7.27}{0.95}{After step 1\\[-1pt]\footnotesize $4$ is now above $5$}
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_1_Fig) at (7.17,0.00) {$4$};
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n1_2_Fig) at (6.70,-1.15) {$1$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_3_Fig) at (7.27,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n1_4_Fig) at (7.84,-3.45) {$3$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n1_5_Fig) at (7.65,-1.15) {$5$};
+  \avE{n1_1_Fig}{n1_2_Fig}
+  \avE{n1_1_Fig}{n1_5_Fig}
+  \avE{n1_2_Fig}{n1_3_Fig}
+  \avE{n1_3_Fig}{n1_4_Fig}
+  \avltitle{13.36}{0.95}{After Zig-Zig\\[-1pt]\footnotesize $1$ is the root}
+  \node[avlpiv,minimum size=7.5mm,font=\small\bfseries] (n2_1_Fig) at (12.84,0.00) {$1$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n2_2_Fig) at (13.41,-1.15) {$4$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_3_Fig) at (12.93,-2.30) {$2$};
+  \node[avln,minimum size=7.5mm,font=\small\bfseries] (n2_4_Fig) at (13.50,-3.45) {$3$};
+  \node[sppath,minimum size=7.5mm,font=\small\bfseries] (n2_5_Fig) at (13.88,-2.30) {$5$};
+  \avE{n2_1_Fig}{n2_2_Fig}
+  \avE{n2_2_Fig}{n2_3_Fig}
+  \avE{n2_2_Fig}{n2_5_Fig}
+  \avE{n2_3_Fig}{n2_4_Fig}
+  \avArr{2.50}{5.70}{-2.40}{1.\\Right-Rotate$(5)$}
+  \avArr{8.84}{12.04}{-1.82}{2.\\Right-Rotate$(4)$}
+\end{tikzpicture}}\end{center}}
